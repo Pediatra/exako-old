@@ -1,9 +1,8 @@
 from django.db import models
 from django.db.models.base import post_save, pre_save
-from django.shortcuts import get_object_or_404
 from ninja.errors import HttpError
 
-from fluentia.apps.card.models import Card
+from fluentia.apps.core.models import CustomManager
 from fluentia.apps.exercise.constants import ExerciseType
 from fluentia.apps.term.constants import Language, Level, TermLexicalType
 from fluentia.apps.term.models import (
@@ -14,63 +13,6 @@ from fluentia.apps.term.models import (
     TermPronunciation,
 )
 from fluentia.apps.user.models import User
-
-
-class ExerciseManager(models.Manager):
-    def create(self, *args, **kwargs):
-        objects = {
-            Term: 'term',
-            TermExample: 'term_example',
-            TermPronunciation: 'term_pronunciation',
-            TermLexical: 'term_lexical',
-            TermDefinition: 'term_definition',
-        }
-        for model, identifier in objects.items():
-            obj_id = kwargs.get(identifier)
-            if isinstance(obj_id, int):
-                obj = get_object_or_404(model, id=obj_id)
-                kwargs[identifier] = obj
-        return super().create(*args, **kwargs)
-
-    def list_(
-        self,
-        language,
-        seed,
-        user,
-        exercise_type=None,
-        level=None,
-        cardset_id=None,
-    ):
-        queryset = (
-            super()
-            .get_queryset()
-            .filter(language=language)
-            .annotate(
-                md5_seed=RandomSeed(
-                    models.F('id'),
-                    seed=seed,
-                    output_field=models.CharField(),
-                )
-            )
-            .order_by('md5_seed')
-        )
-
-        if exercise_type != ExerciseType.RANDOM:
-            queryset = queryset.filter(type=exercise_type)
-
-        if cardset_id:
-            cardset_query = Card.objects.filter(
-                cardset__user=user, cardset_id=cardset_id
-            ).values('term')
-            queryset = queryset.filter(models.Q(term__in=cardset_query))
-
-        if level:
-            level_query = ExerciseLevel.objects.filter(level=level).values(
-                'exercise_id'
-            )
-            queryset = queryset.filter(id__in=level_query)
-
-        return queryset.values('type', 'id')
 
 
 class Exercise(models.Model):
@@ -110,7 +52,7 @@ class Exercise(models.Model):
         blank=True,
     )
     additional_content = models.JSONField(blank=True, null=True)
-    objects = ExerciseManager()
+    objects = CustomManager()
 
     class Meta:
         constraints = [

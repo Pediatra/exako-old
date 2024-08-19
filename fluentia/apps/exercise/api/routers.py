@@ -1,6 +1,6 @@
 from random import random, sample, shuffle
 
-from django.db import IntegrityError
+from django.db import IntegrityError, models
 from django.db.models import OuterRef, Subquery
 from django.db.models.functions import Random
 from django.shortcuts import get_object_or_404
@@ -8,12 +8,13 @@ from ninja import File, Query, Router, UploadedFile
 from ninja.errors import HttpError
 from ninja.pagination import PageNumberPagination, paginate
 
+from fluentia.apps.card.models import Card
 from fluentia.apps.core import schema as core_schema
 from fluentia.apps.core.permissions import is_admin, permission_required
 from fluentia.apps.exercise import constants
 from fluentia.apps.exercise.api import schema
 from fluentia.apps.exercise.constants import ExerciseType
-from fluentia.apps.exercise.models import Exercise
+from fluentia.apps.exercise.models import Exercise, ExerciseLevel, RandomSeed
 from fluentia.apps.term.constants import Language, Level, TermLexicalType
 from fluentia.apps.term.models import (
     Term,
@@ -77,14 +78,31 @@ def list_exercise(
     ),
     seed: float | None = Query(default_factory=random, le=1, ge=0),
 ):
-    return Exercise.objects.list_(
-        language=language,
-        seed=seed,
-        user=request.user,
-        exercise_type=exercise_type,
-        level=level,
-        cardset_id=cardset_id,
+    queryset = (
+        Exercise.objects.filter(language=language)
+        .annotate(
+            md5_seed=RandomSeed(
+                models.F('id'),
+                seed=seed,
+                output_field=models.CharField(),
+            )
+        )
+        .order_by('md5_seed')
     )
+
+    if exercise_type != ExerciseType.RANDOM:
+        queryset = queryset.filter(type=exercise_type)
+
+    if cardset_id:
+        cardset_query = Card.objects.filter(
+            cardset__user=request.user, cardset_id=cardset_id
+        ).values('term')
+        queryset = queryset.filter(models.Q(term__in=cardset_query))
+
+    if level:
+        level_query = ExerciseLevel.objects.filter(level=level).values('exercise_id')
+        queryset = queryset.filter(id__in=level_query)
+    return queryset.values('type', 'id')
 
 
 @exercise_router.get(
