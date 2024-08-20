@@ -1,15 +1,5 @@
-from django.db.models.base import post_save
-
 from fluentia.apps.exercise.constants import ExerciseType
 from fluentia.apps.term.constants import TermLexicalType
-from fluentia.apps.term.models import (
-    Term,
-    TermDefinitionTranslation,
-    TermExample,
-    TermExampleTranslation,
-    TermLexical,
-    TermPronunciation,
-)
 
 
 def insert_order_exercise(sender, instance, created, **kwargs):
@@ -115,12 +105,12 @@ def insert_mchoice_term_translation_exercise(sender, instance, created, **kwargs
     )
 
 
-post_save.connect(insert_order_exercise, TermExampleTranslation)
-post_save.connect(insert_listen_term_mchoice_exercise, TermPronunciation)
-post_save.connect(insert_listen_exercise, TermPronunciation)
-post_save.connect(insert_speak_term_exercise, Term)
-post_save.connect(insert_speak_term_lexical_exercise, TermLexical)
-post_save.connect(insert_speak_sentence_exercise, TermExample)
-post_save.connect(insert_mchoice_term_exercise, TermLexical)
-post_save.connect(insert_mchoice_term_lexical_exercise, TermLexical)
-post_save.connect(insert_mchoice_term_translation_exercise, TermDefinitionTranslation)
+# post_save.connect(insert_order_exercise, TermExampleTranslation)
+# post_save.connect(insert_listen_term_mchoice_exercise, TermPronunciation)
+# post_save.connect(insert_listen_exercise, TermPronunciation)
+# post_save.connect(insert_speak_term_exercise, Term)
+# post_save.connect(insert_speak_term_lexical_exercise, TermLexical)
+# post_save.connect(insert_speak_sentence_exercise, TermExample)
+# post_save.connect(insert_mchoice_term_exercise, TermLexical)
+# post_save.connect(insert_mchoice_term_lexical_exercise, TermLexical)
+# post_save.connect(insert_mchoice_term_translation_exercise, TermDefinitionTranslation)
