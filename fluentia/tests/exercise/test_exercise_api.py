@@ -48,6 +48,12 @@ def list_exercise_router(
     )
 
 
+def order_sentence_router(exercise_id):
+    return reverse_lazy(
+        'api-1.0.0:order_sentence_exercise', kwargs={'exercise_id': exercise_id}
+    )
+
+
 parametrize_exercies = pytest.mark.parametrize(
     'exercise_factory',
     [
@@ -806,3 +812,13 @@ def test_list_exercise_filter_seed(client, token_header, exercise_factory):
 
     assert response.status_code == 200
     assert response.json() == response2.json()
+
+
+def test_order_sentence_exercise(client, token_header):
+    exercise = OrderSentenceFactory()
+
+    response = client.get(order_sentence_router(exercise.id), headers=token_header)
+
+    print(response.json())
+
+    assert 1 == 3

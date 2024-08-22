@@ -49,6 +49,23 @@ class OrderSentenceFactory(_ExerciseBase):
     type = ExerciseType.ORDER_SENTENCE
     term_example = factory.SubFactory(TermExampleFactory)
 
+    @staticmethod
+    def _make_distractors():
+        distractors = TermFactory.create_batch(size=3)
+        return [distractor.id for distractor in distractors]
+
+    @classmethod
+    def _build(cls, *args, **kwargs):
+        additional_content = {'distractors': OrderSentenceFactory._make_distractors()}
+        kwargs.update(additional_content=additional_content)
+        return super()._build(*args, **kwargs)
+
+    @classmethod
+    def _create(cls, *args, **kwargs):
+        additional_content = {'distractors': OrderSentenceFactory._make_distractors()}
+        kwargs.update(additional_content=additional_content)
+        return super()._create(*args, **kwargs)
+
 
 class ListenTermFactory(_ExerciseBase):
     type = ExerciseType.LISTEN_TERM

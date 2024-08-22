@@ -117,7 +117,7 @@ def list_exercise(
     Endpoint que retorna uma frase embaralhada relacionada a um termo e o usuário terá que reordenar a frase na ordem correta.
     """,
 )
-def order_sentence_exercise(exercise_id: int):
+def order_sentence_exercise(request, exercise_id: int):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
@@ -125,11 +125,15 @@ def order_sentence_exercise(exercise_id: int):
     )
     sentence = (
         TermExample.objects.filter(id=exercise.term_example_id)
-        .values('example')
+        .values_list('example')
         .first()
     )
+    print(sentence)
     sentence_parts = sentence.split()
-    sentence_parts += exercise.additional_content.get('distractors', [])
+    distractors_parts = Term.objects.filter(
+        id__in=exercise.additional_content.get('distractors', [])
+    ).values_list('expression', flat=True)
+    sentence_parts += distractors_parts
     return schema.OrderSentenceView(
         header=constants.ORDER_SENTENCE_HEADER,
         sentence=shuffle(sentence_parts),
@@ -141,6 +145,7 @@ def order_sentence_exercise(exercise_id: int):
     response=schema.ExerciseResponse,
 )
 def check_order_sentence_exercise(
+    request,
     exercise_id: int,
     exercise_schema: schema.OrderSentenceCheck,
 ):
@@ -168,7 +173,7 @@ def check_order_sentence_exercise(
     summary='Exercício sobre escuta de pronúncia de termos.',
     description='Endpoint que retorna a pronúncia em forma de aúdio de um texto para o usuário responder qual o termo correspondente.',
 )
-def listen_term_exercise(exercise_id: int):
+def listen_term_exercise(request, exercise_id: int):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
@@ -189,7 +194,9 @@ def listen_term_exercise(exercise_id: int):
     path='/listen-term/{exercise_id}',
     response=schema.ExerciseResponse,
 )
-def check_listen_term_exercise(exercise_id: int, exercise_schema: schema.TextCheck):
+def check_listen_term_exercise(
+    request, exercise_id: int, exercise_schema: schema.TextCheck
+):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
@@ -218,7 +225,7 @@ def check_listen_term_exercise(exercise_id: int, exercise_schema: schema.TextChe
     summary='Exercício sobre escuta de pronúncia de termos.',
     description='Endpoint que retorna a pronúncia de um termo em forma de aúdio de um texto para o usuário responder qual o termo correspondente a partir das alternativas disponíveis com palavras similares.',
 )
-def listen_term_mchoice_exercise(exercise_id: int):
+def listen_term_mchoice_exercise(request, exercise_id: int):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
@@ -267,7 +274,7 @@ def listen_term_mchoice_exercise(exercise_id: int):
     response=schema.ExerciseResponse,
 )
 def check_listen_term_mchoice_exercise(
-    exercise_id: int, exercise_schema: schema.TextCheck
+    request, exercise_id: int, exercise_schema: schema.TextCheck
 ):
     exercise = get_object_or_404(
         Exercise,
@@ -290,7 +297,7 @@ def check_listen_term_mchoice_exercise(
     summary='Exercício sobre escuta de pronúncia de frase.',
     description='Endpoint que retorna a pronúncia em forma de aúdio de uma frase relacionada ao termo para o usuário escrever a frase corretamente.',
 )
-def listen_sentence_exercise(exercise_id: int):
+def listen_sentence_exercise(request, exercise_id: int):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
@@ -311,7 +318,9 @@ def listen_sentence_exercise(exercise_id: int):
     path='/listen-sentence/{exercise_id}',
     response=schema.ExerciseResponse,
 )
-def check_listen_sentence_exercise(exercise_id: int, exercise_schema: schema.TextCheck):
+def check_listen_sentence_exercise(
+    request, exercise_id: int, exercise_schema: schema.TextCheck
+):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
@@ -336,7 +345,7 @@ def check_listen_sentence_exercise(exercise_id: int, exercise_schema: schema.Tex
     summary='Exercício sobre pronúnciação de termos.',
     description='Endpoint que retorna um link para enviar a pronúncia em forma de aúdio de um usuário sobre um termo.',
 )
-def speak_term_exercise(exercise_id: int):
+def speak_term_exercise(request, exercise_id: int):
     pass
 
 
@@ -344,7 +353,9 @@ def speak_term_exercise(exercise_id: int):
     path='/speak-term/{exercise_id}',
     response=schema.ExerciseResponse,
 )
-def check_speak_term_exercise(exercise_id: int, audio: UploadedFile = File(...)):
+def check_speak_term_exercise(
+    request, exercise_id: int, audio: UploadedFile = File(...)
+):
     pass
 
 
@@ -358,7 +369,7 @@ def check_speak_term_exercise(exercise_id: int, audio: UploadedFile = File(...))
     summary='Exercício sobre pronúnciação de termos.',
     description='Endpoint que retorna um link para enviar a pronúncia em forma de aúdio de um usuário sobre um termo.',
 )
-def speak_sentence_exercise(exercise_id: int):
+def speak_sentence_exercise(request, exercise_id: int):
     pass
 
 
@@ -366,7 +377,7 @@ def speak_sentence_exercise(exercise_id: int):
     path='/speak-sentence/{exercise_id}',
     response=schema.ExerciseResponse,
 )
-def check_speak_sentence_exercise(exercise_id: int):
+def check_speak_sentence_exercise(request, exercise_id: int):
     pass
 
 
@@ -380,7 +391,7 @@ def check_speak_sentence_exercise(exercise_id: int):
     summary='Exercício de multipla escolha sobre termos.',
     description='Endpoint que retorará uma frase com um termo atrelado faltando, no qual será necessário escolher entre as opções qual completa o espaço na frase.',
 )
-def term_mchoice_exercise(exercise_id: int):
+def term_mchoice_exercise(request, exercise_id: int):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
@@ -409,7 +420,9 @@ def term_mchoice_exercise(exercise_id: int):
     path='/mchoice-term/{exercise_id}',
     response=schema.TextCheck,
 )
-def check_term_mchoice_exercise(exercise_id: int, exercise_schema: schema.TextCheck):
+def check_term_mchoice_exercise(
+    request, exercise_id: int, exercise_schema: schema.TextCheck
+):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
@@ -438,7 +451,7 @@ def check_term_mchoice_exercise(exercise_id: int, exercise_schema: schema.TextCh
     summary='Exercício de multipla escolha sobre definições de termos.',
     description='O usuário receberá um termo, no qual será necessário escolher entre as opções qual pertence ao termo.',
 )
-def term_definition_mchoice_exercise(exercise_id: int):
+def term_definition_mchoice_exercise(request, exercise_id: int):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
@@ -468,6 +481,7 @@ def term_definition_mchoice_exercise(exercise_id: int):
     response=schema.ExerciseResponse,
 )
 def check_term_definition_mchoice_exercise(
+    request,
     exercise_id: int,
     exercise_schema: schema.ExerciseSchema,
 ):
