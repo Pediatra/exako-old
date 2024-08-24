@@ -201,10 +201,11 @@ def test_create_term_pronunciation_multiple_models(
 
 
 @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
-def test_create_term_pronunciation_lexical_is_not_form(
+def test_create_term_pronunciation_lexical_with_term_value_ref(
     client, generate_payload, token_header
 ):
-    term_lexical = TermLexicalFactory(type=TermLexicalType.ANTONYM)
+    term_value_ref = TermFactory()
+    term_lexical = TermLexicalFactory(term_value_ref=term_value_ref)
     payload = generate_payload(TermPronunciationFactory, term_lexical=term_lexical)
 
     response = client.post(
@@ -216,7 +217,7 @@ def test_create_term_pronunciation_lexical_is_not_form(
 
     assert response.status_code == 422
     assert (
-        'pronunciation lexical only accepts TermLexicalType.FORM'
+        'lexical with term_value_ref cannot have a pronunciation.'
         in response.json()['detail']
     )
 

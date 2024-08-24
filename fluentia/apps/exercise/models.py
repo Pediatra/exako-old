@@ -9,6 +9,7 @@ from fluentia.apps.term.models import (
     Term,
     TermDefinition,
     TermExample,
+    TermExampleLink,
     TermLexical,
     TermPronunciation,
 )
@@ -113,12 +114,12 @@ class Exercise(models.Model):
                 condition=models.Q(type=ExerciseType.SPEAK_SENTENCE),
             ),
             models.UniqueConstraint(
-                fields=['type', 'language', 'term'],
+                fields=['type', 'language', 'term', 'term_example'],
                 name='unique_mchoice_term',
                 condition=models.Q(type=ExerciseType.TERM_MCHOICE),
             ),
             models.UniqueConstraint(
-                fields=['type', 'language', 'term', 'term_lexical'],
+                fields=['type', 'language', 'term', 'term_example', 'term_lexical'],
                 name='unique_mchoice_term_lexical',
                 condition=models.Q(type=ExerciseType.TERM_MCHOICE),
             ),
@@ -174,17 +175,6 @@ def validate_listen_exercise(sender, instance, **kwargs):
         )
 
 
-def validate_term_lexical_type(sender, instance, **kwargs):
-    if not instance.term_lexical:
-        return
-
-    if instance.term_lexical.type != TermLexicalType.FORM:
-        raise HttpError(
-            status_code=422,
-            message='exercise lexical only accepts TermLexicalType.FORM.',
-        )
-
-
 def validate_listen_mchoice_exercise(sender, instance, **kwargs):
     if instance.type != ExerciseType.LISTEN_TERM_MCHOICE:
         return
@@ -204,6 +194,28 @@ def validate_listen_mchoice_exercise(sender, instance, **kwargs):
         raise HttpError(
             status_code=422,
             message='mchoice exercises need to have at least 3 TermLexicalType.RHYME objects to form the alternatives.',
+        )
+
+
+def validate_term_mchoice_exercise_example_highlight(sender, instance, **kwargs):
+    if instance.type != ExerciseType.TERM_MCHOICE:
+        return
+
+    if instance.term_lexical_id:
+        query = TermExampleLink.objects.filter(
+            term_example_id=instance.term_example_id,
+            term_lexical_id=instance.term_lexical_id,
+        )
+    else:
+        query = TermExampleLink.objects.filter(
+            term_example_id=instance.term_example_id,
+            term_id=instance.term_id,
+        )
+
+    if not query.exists():
+        raise HttpError(
+            status_code=422,
+            message='term mchoice exercise need term_example with highlight link.',
         )
 
 
@@ -276,11 +288,11 @@ def validate_term_definition_mchoice_distractors(sender, instance, **kwargs):
 
 
 pre_save.connect(validate_listen_exercise, Exercise)
-pre_save.connect(validate_term_lexical_type, Exercise)
 pre_save.connect(validate_listen_mchoice_exercise, Exercise)
 pre_save.connect(validate_order_sentence_distractors, Exercise)
 pre_save.connect(validate_term_mchoice_distractors, Exercise)
 pre_save.connect(validate_term_definition_mchoice_distractors, Exercise)
+pre_save.connect(validate_term_mchoice_exercise_example_highlight, Exercise)
 
 
 def create_exercise_level_term_example(sender, instance, **kwargs):

@@ -1,4 +1,5 @@
-from random import random, sample, shuffle
+from random import randint, random, sample, shuffle
+from string import punctuation
 
 from django.db import IntegrityError, models
 from django.db.models import OuterRef, Subquery
@@ -19,7 +20,7 @@ from fluentia.apps.term.constants import Language, Level, TermLexicalType
 from fluentia.apps.term.models import (
     Term,
     TermDefinition,
-    TermExample,
+    TermExampleLink,
     TermLexical,
     TermPronunciation,
 )
@@ -123,20 +124,21 @@ def order_sentence_exercise(request, exercise_id: int):
         id=exercise_id,
         type=ExerciseType.ORDER_SENTENCE,
     )
-    sentence = (
-        TermExample.objects.filter(id=exercise.term_example_id)
-        .values_list('example')
-        .first()
-    )
-    print(sentence)
+    sentence = exercise.term_example.example
+    sentence = sentence.translate(str.maketrans('', '', punctuation))
     sentence_parts = sentence.split()
-    distractors_parts = Term.objects.filter(
-        id__in=exercise.additional_content.get('distractors', [])
-    ).values_list('expression', flat=True)
-    sentence_parts += distractors_parts
+
+    distractors = exercise.additional_content.get('distractors', [])
+    number_of_distractors = randint(1, len(distractors))
+    distractors_parts = Term.objects.filter(id__in=distractors).values_list(
+        'expression', flat=True
+    )[:number_of_distractors]
+    sentence_parts += list(distractors_parts)
+
+    shuffle(sentence_parts)
     return schema.OrderSentenceView(
         header=constants.ORDER_SENTENCE_HEADER,
-        sentence=shuffle(sentence_parts),
+        sentence=sentence_parts,
     )
 
 
@@ -147,19 +149,18 @@ def order_sentence_exercise(request, exercise_id: int):
 def check_order_sentence_exercise(
     request,
     exercise_id: int,
-    exercise_schema: schema.OrderSentenceCheck,
+    exercise_schema: schema.TextCheck,
 ):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
         type=ExerciseType.ORDER_SENTENCE,
     )
-    sentence = (
-        TermExample.objects.filter(id=exercise.term_example_id)
-        .values('example')
-        .first()
-    )
-    correct = sentence.split() == exercise_schema.sentence
+
+    sentence = exercise.term_example.example
+    sentence = sentence.translate(str.maketrans('', '', punctuation))
+    check_sentence = exercise_schema.text.translate(str.maketrans('', '', punctuation))
+    correct = sentence == check_sentence
     return schema.ExerciseResponse(correct=correct, correct_answer=sentence)
 
 
@@ -179,11 +180,8 @@ def listen_term_exercise(request, exercise_id: int):
         id=exercise_id,
         type=ExerciseType.LISTEN_TERM,
     )
-    audio_file = (
-        TermPronunciation.objects.filter(id=exercise.term_pronunciation_id)
-        .values('audio_file')
-        .first()
-    )
+
+    audio_file = exercise.term_pronunciation.audio_file
     return schema.ListenView(
         header=constants.LISTEN_TERM_HEADER,
         audio_file=audio_file,
@@ -195,7 +193,9 @@ def listen_term_exercise(request, exercise_id: int):
     response=schema.ExerciseResponse,
 )
 def check_listen_term_exercise(
-    request, exercise_id: int, exercise_schema: schema.TextCheck
+    request,
+    exercise_id: int,
+    exercise_schema: schema.TextCheck,
 ):
     exercise = get_object_or_404(
         Exercise,
@@ -203,14 +203,14 @@ def check_listen_term_exercise(
         type=ExerciseType.LISTEN_TERM,
     )
     if exercise.term_lexical_id:
-        value, expression = (
+        text_values = (
             TermLexical.objects.filter(id=exercise.term_lexical_id)
             .values('value', 'term_value_ref__expression')
             .first()
         )
-        text = value or expression
+        text = text_values.get('value') or text_values.get('term_value_ref__expression')
     else:
-        text = Term.objects.filter(id=exercise.term_id).values('expression').first()
+        text = exercise.term.expression
     correct = text.lower() == exercise_schema.text.lower()
     return schema.ExerciseResponse(correct=correct, correct_answert=text)
 
@@ -236,7 +236,7 @@ def listen_term_mchoice_exercise(request, exercise_id: int):
         TermLexical.objects.filter(
             term_id=exercise.term_id,
             type=TermLexicalType.RHYME,
-            term_value_ref__is_null=False,
+            term_value_ref__isnull=False,
         )
         .select_related('term_value_ref')
         .annotate(random_order=Random())
@@ -248,21 +248,20 @@ def listen_term_mchoice_exercise(request, exercise_id: int):
             )
         )
         .order_by('random_order')[:3]
-        .values(
+        .values_list(
             'term_value_ref__expression',
             'audio_file',
         )
     )
     alternatives = {expression: audio_file for expression, audio_file in choices}
 
-    expression = Term.objects.filter(id=exercise.term_id).values('expression').first()
-    audio_file = (
-        TermPronunciation.objects.filter(id=exercise.term_pronunciation_id)
-        .values('audio_file')
-        .first()
-    )
+    expression = exercise.term.expression
+    audio_file = exercise.term_pronunciation.audio_file
     alternatives[expression] = audio_file
 
+    alternatives = list(alternatives.items())
+    shuffle(alternatives)
+    alternatives = dict(alternatives)
     return schema.ListenMChoiceView(
         header=constants.LISTEN_MCHOICE_HEADER,
         choices=alternatives,
@@ -274,7 +273,9 @@ def listen_term_mchoice_exercise(request, exercise_id: int):
     response=schema.ExerciseResponse,
 )
 def check_listen_term_mchoice_exercise(
-    request, exercise_id: int, exercise_schema: schema.TextCheck
+    request,
+    exercise_id: int,
+    exercise_schema: schema.TextCheck,
 ):
     exercise = get_object_or_404(
         Exercise,
@@ -282,9 +283,9 @@ def check_listen_term_mchoice_exercise(
         type=ExerciseType.LISTEN_TERM_MCHOICE,
     )
 
-    text = Term.objects.filter(id=exercise.term_id).values('expression').first()
+    text = exercise.term.expression
     correct = text.lower() == exercise_schema.text.lower()
-    return schema.ExerciseResponse(correct=correct, correct_answert=text)
+    return schema.ExerciseResponse(correct=correct, correct_answer=text)
 
 
 @exercise_router.get(
@@ -303,11 +304,8 @@ def listen_sentence_exercise(request, exercise_id: int):
         id=exercise_id,
         type=ExerciseType.LISTEN_SENTENCE,
     )
-    audio_file = (
-        TermPronunciation.objects.filter(id=exercise.term_pronunciation_id)
-        .values('audio_file')
-        .first()
-    )
+
+    audio_file = exercise.term_pronunciation.audio_file
     return schema.ListenView(
         header=constants.LISTEN_SENTENCE_HEADER,
         audio_file=audio_file,
@@ -319,18 +317,17 @@ def listen_sentence_exercise(request, exercise_id: int):
     response=schema.ExerciseResponse,
 )
 def check_listen_sentence_exercise(
-    request, exercise_id: int, exercise_schema: schema.TextCheck
+    request,
+    exercise_id: int,
+    exercise_schema: schema.TextCheck,
 ):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
         type=ExerciseType.LISTEN_SENTENCE,
     )
-    text = (
-        TermExample.objects.filter(id=exercise.term_example_id)
-        .values('example')
-        .first()
-    )
+
+    text = exercise.term_example.example
     correct = text.lower() == exercise_schema.text.lower()
     return schema.ExerciseResponse(correct=correct, correct_answert=text)
 
@@ -397,48 +394,75 @@ def term_mchoice_exercise(request, exercise_id: int):
         id=exercise_id,
         type=ExerciseType.TERM_MCHOICE,
     )
+
     if exercise.term_lexical_id:
-        value, expression = (
+        text_values = (
             TermLexical.objects.filter(id=exercise.term_lexical_id)
             .values('value', 'term_value_ref__expression')
             .first()
         )
-        text = value or expression
+        text = text_values.get('value') or text_values.get('term_value_ref__expression')
+        highlight = TermExampleLink.objects.filter(
+            term_example_id=exercise.term_example_id,
+            term_lexical_id=exercise.term_lexical_id,
+        ).values_list('highlight', flat=True)[0]
     else:
-        text = Term.objects.filter(id=exercise.term_id).values('expression').first()
+        text = exercise.term.expression
+        highlight = TermExampleLink.objects.filter(
+            term_example_id=exercise.term_example_id,
+            term_id=exercise.term_id,
+        ).values_list('highlight', flat=True)[0]
+
+    choices = list()
+    choices.append(text)
+
     distractors = exercise.additional_content.get('distractors')
     term_ids = list(sample(distractors, 3))
-    alternatives = Term.objects.filter(id__in=term_ids).values('expression')
-    alternatives.append(text)
+    choices += list(
+        Term.objects.filter(id__in=term_ids).values_list('expression', flat=True)
+    )
+
+    sentence = exercise.term_example.example
+    sentence = list(sentence)
+
+    for start, end in list(highlight):
+        for i in range(start, end + 1):
+            sentence[i] = '_'
+
+    sentence = ''.join(sentence)
+
+    shuffle(choices)
     return schema.MultipleChoiceView(
-        header=constants.MCHOICE_TERM_HEADER,
-        choices=alternatives,
+        header=constants.MCHOICE_TERM_HEADER.format(sentence=sentence),
+        choices=choices,
     )
 
 
 @exercise_router.post(
     path='/mchoice-term/{exercise_id}',
-    response=schema.TextCheck,
+    response=schema.ExerciseResponse,
 )
 def check_term_mchoice_exercise(
-    request, exercise_id: int, exercise_schema: schema.TextCheck
+    request,
+    exercise_id: int,
+    exercise_schema: schema.TextCheck,
 ):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
-        type=ExerciseType.LISTEN_TERM,
+        type=ExerciseType.TERM_MCHOICE,
     )
     if exercise.term_lexical_id:
-        value, expression = (
+        text_values = (
             TermLexical.objects.filter(id=exercise.term_lexical_id)
             .values('value', 'term_value_ref__expression')
             .first()
         )
-        text = value or expression
+        text = text_values.get('value') or text_values.get('term_value_ref__expression')
     else:
-        text = Term.objects.filter(id=exercise.term_id).values('expression').first()
+        text = exercise.term.expression
     correct = text.lower() == exercise_schema.text.lower()
-    return schema.ExerciseResponse(correct=correct, correct_answert=text)
+    return schema.ExerciseResponse(correct=correct, correct_answer=text)
 
 
 @exercise_router.get(
@@ -457,22 +481,24 @@ def term_definition_mchoice_exercise(request, exercise_id: int):
         id=exercise_id,
         type=ExerciseType.TERM_DEFINITION_MCHOICE,
     )
+
+    definition = exercise.term_definition.definition
+    choices = list()
+    choices.append(definition)
+
     distractors = exercise.additional_content.get('distractors')
     definition_ids = list(sample(distractors, 3))
-    alternatives = list(
-        TermDefinition.objects.filter(id__in=definition_ids).values('definition')
+    choices += list(
+        TermDefinition.objects.filter(id__in=definition_ids).values_list(
+            'definition', flat=True
+        )
     )
-    definition = (
-        TermDefinition.objects.filter(id=exercise.term_definition_id)
-        .values('definition')
-        .first()
-    )
-    alternatives.append(definition)
 
-    term = Term.objects.filter(id=exercise.term_id).values('expression').first()
     return schema.MultipleChoiceView(
-        header=constants.MCHOICE_TERM_DEFINITION_HEADER.format(term=term),
-        choices=alternatives,
+        header=constants.MCHOICE_TERM_DEFINITION_HEADER.format(
+            term=exercise.term.expression
+        ),
+        choices=choices,
     )
 
 
@@ -483,13 +509,14 @@ def term_definition_mchoice_exercise(request, exercise_id: int):
 def check_term_definition_mchoice_exercise(
     request,
     exercise_id: int,
-    exercise_schema: schema.ExerciseSchema,
+    exercise_schema: schema.TextCheck,
 ):
     exercise = get_object_or_404(
         Exercise,
         id=exercise_id,
         type=ExerciseType.TERM_DEFINITION_MCHOICE,
     )
-    text = Term.objects.filter(id=exercise.term_id).values('expression').first()
+
+    text = exercise.term_definition.definition
     correct = text.lower() == exercise_schema.text.lower()
-    return schema.ExerciseResponse(correct=correct, correct_answert=text)
+    return schema.ExerciseResponse(correct=correct, correct_answer=text)

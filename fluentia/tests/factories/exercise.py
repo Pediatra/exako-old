@@ -7,6 +7,7 @@ from fluentia.apps.term.models import (
     Term,
     TermDefinition,
     TermExample,
+    TermExampleLink,
     TermLexical,
     TermPronunciation,
 )
@@ -41,6 +42,25 @@ class _ExerciseBase(factory.django.DjangoModelFactory):
         kwargs.update(to_update)
         return super()._build(*args, **kwargs)
 
+    @classmethod
+    def _create(cls, *args, **kwargs):
+        factories = {
+            Term: TermFactory,
+            TermExample: TermExampleFactory,
+            TermPronunciation: TermPronunciationFactory,
+            TermLexical: TermLexicalFactory,
+            TermDefinition: TermDefinitionFactory,
+        }
+        to_update = {}
+        for key, value in kwargs.items():
+            factory = factories.get(value.__class__)
+            if factory:
+                if value.id is not None:
+                    continue
+                to_update[key] = factory()
+        kwargs.update(to_update)
+        return super()._create(*args, **kwargs)
+
     class Meta:
         model = Exercise
 
@@ -71,6 +91,10 @@ class ListenTermFactory(_ExerciseBase):
     type = ExerciseType.LISTEN_TERM
     term = factory.SubFactory(TermFactory)
     term_pronunciation = factory.SubFactory(TermPronunciationFactory)
+
+
+class ListenTermLexicalFactory(ListenTermFactory):
+    term_lexical = factory.SubFactory(TermLexicalFactory)
 
 
 class ListenSentenceFactory(_ExerciseBase):
@@ -113,6 +137,10 @@ class SpeakTermFactory(_ExerciseBase):
     term = factory.SubFactory(TermFactory)
 
 
+class SpeakTermLexicalFactory(SpeakTermFactory):
+    term_lexical = factory.SubFactory(TermLexicalFactory)
+
+
 class SpeakSentenceFactory(_ExerciseBase):
     type = ExerciseType.SPEAK_SENTENCE
     term_example = factory.SubFactory(TermExampleFactory)
@@ -121,6 +149,7 @@ class SpeakSentenceFactory(_ExerciseBase):
 class TermMChoiceFactory(_ExerciseBase):
     type = ExerciseType.TERM_MCHOICE
     term = factory.SubFactory(TermFactory)
+    term_example = factory.SubFactory(TermExampleFactory)
 
     @staticmethod
     def _make_distractors():
@@ -129,15 +158,38 @@ class TermMChoiceFactory(_ExerciseBase):
 
     @classmethod
     def _build(cls, *args, **kwargs):
-        additional_content = {'distractors': TermMChoiceFactory._make_distractors()}
-        kwargs.update(additional_content=additional_content)
+        kwargs.update(
+            additional_content={'distractors': TermMChoiceFactory._make_distractors()}
+        )
         return super()._build(*args, **kwargs)
 
     @classmethod
     def _create(cls, *args, **kwargs):
-        additional_content = {'distractors': TermMChoiceFactory._make_distractors()}
-        kwargs.update(additional_content=additional_content)
+        TermExampleLink.objects.get_or_create(
+            highlight=[[1, 5], [7, 9]],
+            term_example=kwargs.get('term_example'),
+            term=kwargs.get('term'),
+            term_lexical=kwargs.get('term_lexical'),
+        )
+        kwargs.update(
+            additional_content={'distractors': TermMChoiceFactory._make_distractors()}
+        )
         return super()._create(*args, **kwargs)
+
+    @classmethod
+    def build(cls, *args, **kwargs):
+        build = super().build(*args, **kwargs)
+        TermExampleLink.objects.get_or_create(
+            highlight=[[1, 5], [7, 9]],
+            term_example=build.term_example,
+            term=build.term,
+            term_lexical=build.term_lexical,
+        )
+        return build
+
+
+class TermLexicalMChoiceFactory(TermMChoiceFactory):
+    term_lexical = factory.SubFactory(TermLexicalFactory)
 
 
 class TermDefinitionMChoiceFactory(_ExerciseBase):
@@ -152,16 +204,18 @@ class TermDefinitionMChoiceFactory(_ExerciseBase):
 
     @classmethod
     def _build(cls, *args, **kwargs):
-        additional_content = {
-            'distractors': TermDefinitionMChoiceFactory._make_distractors()
-        }
-        kwargs.update(additional_content=additional_content)
+        kwargs.update(
+            additional_content={
+                'distractors': TermDefinitionMChoiceFactory._make_distractors()
+            }
+        )
         return super()._build(*args, **kwargs)
 
     @classmethod
     def _create(cls, *args, **kwargs):
-        additional_content = {
-            'distractors': TermDefinitionMChoiceFactory._make_distractors()
-        }
-        kwargs.update(additional_content=additional_content)
+        kwargs.update(
+            additional_content={
+                'distractors': TermDefinitionMChoiceFactory._make_distractors()
+            }
+        )
         return super()._create(*args, **kwargs)

@@ -48,6 +48,7 @@ class SpeakSentenceSchema(ExerciseSchemaBase):
 
 class MChoiceTermSchema(ExerciseSchemaBase):
     term: int
+    term_example: int
     term_lexical: int | None = None
 
 
@@ -128,14 +129,8 @@ class ExerciseBaseView(Schema):
 
 
 class OrderSentenceView(ExerciseBaseView):
-    shuffled_sentence: list[str] = Field(
-        examples=[['almoçei', 'na', 'Ontem', 'casa', 'da', 'eu', 'mãe', 'minha.']]
-    )
-
-
-class OrderSentenceCheck(Schema):
     sentence: list[str] = Field(
-        examples=[['Ontem', 'eu', 'almocei', 'na', 'casa', 'da', 'minha', 'mãe']]
+        examples=[['almoçei', 'na', 'Ontem', 'casa', 'da', 'eu', 'mãe', 'minha.']]
     )
 
 

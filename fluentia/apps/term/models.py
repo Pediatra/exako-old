@@ -204,10 +204,10 @@ def validate_pronunciation_lexical_form(sender, instance, **kwargs):
     if not instance.term_lexical:
         return
 
-    if instance.term_lexical.type != constants.TermLexicalType.FORM:
+    if instance.term_lexical.term_value_ref:
         raise HttpError(
             status_code=422,
-            message='pronunciation lexical only accepts TermLexicalType.FORM',
+            message='lexical with term_value_ref cannot have a pronunciation.',
         )
 
 

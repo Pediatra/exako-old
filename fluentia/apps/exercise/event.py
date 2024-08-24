@@ -90,6 +90,8 @@ def insert_mchoice_term_lexical_exercise(sender, instance, created, **kwargs):
         return
 
     return dict(
+        term_example=instance,
+        term=instance,
         term_lexical=instance,
         type=ExerciseType.TERM_MCHOICE,
         language=instance.term.origin_language,
@@ -112,5 +114,5 @@ def insert_mchoice_term_translation_exercise(sender, instance, created, **kwargs
 # post_save.connect(insert_speak_term_lexical_exercise, TermLexical)
 # post_save.connect(insert_speak_sentence_exercise, TermExample)
 # post_save.connect(insert_mchoice_term_exercise, TermLexical)
-# post_save.connect(insert_mchoice_term_lexical_exercise, TermLexical)
-# post_save.connect(insert_mchoice_term_translation_exercise, TermDefinitionTranslation)
+# post_save.connect(insert_mchoice_term_lexical_exercise, TermExampleLink)
+# post_save.connect(insert_mchoice_term_translation_exercise, TermDefinition)
