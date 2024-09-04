@@ -30,14 +30,14 @@ class TermManager(models.Manager):
                     origin_language=origin_language,
                 )
                 | models.Q(
-                    expression__in=models.Subquery(
+                    id__in=models.Subquery(
                         TermLexical.objects.select_related('term')
                         .filter(
+                            type=constants.TermLexicalType.INFLECTION,
                             value__ct=expression,
                             term__origin_language=models.OuterRef('origin_language'),
-                            type=constants.TermLexicalType.FORM,
                         )
-                        .values_list('term__expression', flat=True)
+                        .values_list('term_id', flat=True)
                     ),
                 ),
             )
@@ -98,6 +98,13 @@ def validate_term_value_ref(sender, instance, **kwargs):
 
 
 pre_save.connect(validate_term_value_ref, TermLexical)
+
+
+class TermImage(TermBase):
+    term = models.OneToOneField(Term, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='term')
+
+    objects = CustomManager()
 
 
 class TermExample(TermBase):
@@ -329,11 +336,11 @@ class CleanText(models.Lookup):
 
 @models.CharField.register_lookup
 @models.TextField.register_lookup
-class CleanTextIContains(models.Lookup):
-    lookup_name = 'ct_icontains'
+class CleanTextSimilarity(models.Lookup):
+    lookup_name = 'ct_similarity'
 
     def as_sql(self, compiler, connection):
         lhs, lhs_params = self.process_lhs(compiler, connection)
         rhs, rhs_params = self.process_rhs(compiler, connection)
         params = lhs_params + rhs_params
-        return f"clean_text({lhs}) LIKE '%%' || clean_text({rhs}) || '%%'", params
+        return f'similarity(clean_text({lhs}), clean_text({rhs})) > 0.7', params

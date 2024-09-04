@@ -8,6 +8,7 @@ from fluentia.apps.term.models import (
     TermDefinitionTranslation,
     TermExample,
     TermExampleTranslation,
+    TermImage,
     TermLexical,
     TermPronunciation,
 )
@@ -86,3 +87,11 @@ class TermPronunciationFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = TermPronunciation
+
+
+class TermImageFactory(factory.django.DjangoModelFactory):
+    term = factory.SubFactory(TermFactory)
+    image = factory.django.ImageField(color='blue')
+
+    class Meta:
+        model = TermImage

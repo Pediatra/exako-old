@@ -1,0 +1,49 @@
+{% extends 'term/base.html' %}
+
+{% block style %}
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+{% endblock %}
+
+{% block content %}
+        <h1 class="text-3xl font-bold mb-6 text-indigo-800">Meus Decks</h1>
+        <div class="grid grid-cols-3 gap-6">
+            <!-- Card -->
+            <div class="bg-white shadow-lg rounded-lg p-6 card-hover transition duration-300 relative size-full px-5 cursor-pointer">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-indigo-700 break-all">Vocabulário - Inglês</h2>
+                    <span class="text-sm font-medium bg-indigo-100 text-indigo-800 py-1 px-2 rounded-full text-center">200 cartões</span>
+                </div>
+                <div class="flex justify-between mt-4">
+                    <div class="flex flex-col justify-between gap-1">
+                        <span class="text-sm text-gray-500">Última revisão: 2 dias atrás</span>
+                        <span class="text-sm text-gray-500">Criado em: 21 de abril de 2019</span>
+                    </div>
+                    <div class="action-icons flex space-x-2 mt-4 justify-end">
+                        <button class="text-gray-500 hover:text-indigo-600" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button class="text-gray-500 hover:text-red-600" title="Deletar"><i class="fas fa-trash-alt"></i></button>
+                        <button class="text-gray-500 hover:text-green-600" title="Adicionar cartões"><i class="fas fa-plus-circle"></i></button>
+                        <button class="text-gray-500 hover:text-blue-600" title="Compartilhar"><i class="fas fa-share-alt"></i></button>
+                        <button class="text-gray-500 hover:text-yellow-600" title="Fixar"><i class="fas fa-thumbtack"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    document.querySelectorAll('.card-hover').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-5px)';
+            card.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.1)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+            card.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        });
+    });
+</script>
+{% endblock %}

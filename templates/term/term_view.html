@@ -1,0 +1,221 @@
+{% extends 'term/base.html' %}
+
+{% block head %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.css" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.js"></script>
+{% endblock %}
+
+{% block style %}
+.flag-icon {
+    width: 1.5em;
+    height: 1em;
+    margin-right: 0.5em;
+    vertical-align: middle;
+    display: inline-block;
+    background-size: contain;
+    background-position: 50%;
+    background-repeat: no-repeat;
+}
+{% endblock %}
+
+{% block content%}
+    <header class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-6xl font-bold text-indigo-800 mb-2">Run</h1>
+            <div class="flex items-center space-x-4">
+                <span class="text-2xl text-gray-600">/rʌn/</span>
+                <button class="bg-indigo-600 text-white px-4 py-2 rounded-full hover:bg-indigo-700 transition duration-300 flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Ouvir Pronúncia
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="absolute top-0 right-0 flex items-center">
+        <label for="language-select" class="mr-2 text-md font-medium text-gray-700">
+                Traduzir para:
+        </label>
+        <select id="countries" class="block w-40 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-1">
+            <option selected>Nenhum</option>
+            <option value="US"><span class="flag-icon flag-icon-br mr-2"></span> <span>United States</span></option>
+            <option value="CA"><span class="flag-icon flag-icon-br mr-2"></span> <span>United States</span></option>
+            <option value="FR"><span class="flag-icon flag-icon-br mr-2"></span> <span>United States</span></option>
+            <option value="DE"><span class="flag-icon flag-icon-br mr-2"></span> <span>United States</span></option>
+        </select>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="md:col-span-2 space-y-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-2xl font-bold mb-4 text-indigo-800">Definições</h2>
+                <div class="space-y-4">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-semibold text-xl text-indigo-700">Verbo</span>
+                        <span class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">A1</span>
+                    </div>
+                    <p class="text-lg mb-1">Mover-se rapidamente, movendo as pernas mais rapidamente do que ao andar.</p>
+                    <p class="text-md text-gray-600 italic">Correr</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-semibold text-xl text-indigo-700">Substantivo</span>
+                        <span class="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">B1</span>
+                    </div>
+                    <p class="text-lg mb-1">Um período contínuo de atividade ou sucesso.</p>
+                    <p class="text-md text-gray-600 italic">Sequência</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-4 text-indigo-800">Exemplos</h2>
+            <div class="space-y-4">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-lg mb-1">"She runs five kilometers every morning."</p>
+                    <p class="text-md text-gray-600 italic">Ela corre cinco quilômetros todas as manhãs.</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-lg mb-1">"The company had a good run of profits last year."</p>
+                    <p class="text-md text-gray-600 italic">A empresa teve uma boa sequência de lucros no ano passado.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-4 text-indigo-800">Informações Léxicas</h2>
+            <div class="mb-4">
+                <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="lexicalTabs" role="tablist">
+                    <li class="mr-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 rounded-t-lg" id="synonyms-tab" data-tabs-target="#synonyms" type="button" role="tab" aria-controls="synonyms" aria-selected="false">Sinônimos</button>
+                    </li>
+                    <li class="mr-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="antonyms-tab" data-tabs-target="#antonyms" type="button" role="tab" aria-controls="antonyms" aria-selected="false">Antônimos</button>
+                    </li>
+                    <li class="mr-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="inflection-tab" data-tabs-target="#inflection" type="button" role="tab" aria-controls="inflection" aria-selected="false">Inflexões</button>
+                    </li>
+                    <li class="mr-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="idioms-tab" data-tabs-target="#idioms" type="button" role="tab" aria-controls="idioms" aria-selected="false">Expressões</button>
+                    </li>
+                    <li class="mr-2" role="presentation">
+                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="rhymes-tab" data-tabs-target="#rhymes" type="button" role="tab" aria-controls="rhymes" aria-selected="false">Rimas</button>
+                    </li>
+                </ul>
+            </div>
+            <div id="lexicalTabContent">
+                <div class="hidden p-4 rounded-lg bg-gray-50" id="synonyms" role="tabpanel" aria-labelledby="synonyms-tab">
+                    <h3 class="font-semibold text-lg mb-2 text-indigo-700">Sinônimos</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-lime-100 text-lime-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>   
+                        <span class="bg-lime-100 text-lime-800 text-sm font-medium p-1 rounded-lg cursor-pointer">dash</span>
+                        <span class="bg-lime-100 text-lime-800 text-sm font-medium p-1 rounded-lg cursor-pointer">jog</span>
+                        <span class="bg-lime-100 text-lime-800 text-sm font-medium p-1 rounded-lg cursor-pointer">race</span>
+                    </div>
+                </div>
+                <div class="hidden p-4 rounded-lg bg-gray-50" id="antonyms" role="tabpanel" aria-labelledby="antonyms-tab">
+                    <h3 class="font-semibold text-lg mb-2 text-indigo-700">Antônimos</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-red-100 text-red-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>   
+                        <span class="bg-red-100 text-red-800 text-sm font-medium p-1 rounded-lg cursor-pointer">dash</span>
+                        <span class="bg-red-100 text-red-800 text-sm font-medium p-1 rounded-lg cursor-pointer">jog</span>
+                        <span class="bg-red-100 text-red-800 text-sm font-medium p-1 rounded-lg cursor-pointer">race</span>
+                    </div>
+                </div>
+                <div class="hidden p-4 rounded-lg bg-gray-50" id="inflection" role="tabpanel" aria-labelledby="inflection-tab">
+                    <h3 class="font-semibold text-lg mb-2 text-indigo-700">Inflexões</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-sky-100 text-sky-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>   
+                        <span class="bg-sky-100 text-sky-800 text-sm font-medium p-1 rounded-lg cursor-pointer">dash</span>
+                        <span class="bg-sky-100 text-sky-800 text-sm font-medium p-1 rounded-lg cursor-pointer">jog</span>
+                        <span class="bg-sky-100 text-sky-800 text-sm font-medium p-1 rounded-lg cursor-pointer">race</span>
+                    </div>
+                </div>
+                <div class="hidden p-4 rounded-lg bg-gray-50" id="idioms" role="tabpanel" aria-labelledby="idioms-tab">
+                    <h3 class="font-semibold text-lg mb-2 text-indigo-700">Expressões Idiomáticas</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-amber-100 text-amber-800 text-sm font-medium p-1 rounded-lg cursor-pointer">run out of time</span>   
+                        <span class="bg-amber-100 text-amber-800 text-sm font-medium p-1 rounded-lg cursor-pointer">run out of time</span>
+                        <span class="bg-amber-100 text-amber-800 text-sm font-medium p-1 rounded-lg cursor-pointer">run out of time</span>
+                        <span class="bg-amber-100 text-amber-800 text-sm font-medium p-1 rounded-lg cursor-pointer">run out of time</span>
+                    </div>
+                </div>
+                <div class="hidden p-4 rounded-lg bg-gray-50" id="rhymes" role="tabpanel" aria-labelledby="rhymes-tab">
+                    <h3 class="font-semibold text-lg mb-2 text-indigo-700">Rimas</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-indigo-100 text-indigo-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>   
+                        <span class="bg-indigo-100 text-indigo-800 text-sm font-medium p-1 rounded-lg cursor-pointer">dash</span>
+                        <span class="bg-indigo-100 text-indigo-800 text-sm font-medium p-1 rounded-lg cursor-pointer">jog</span>
+                        <span class="bg-indigo-100 text-indigo-800 text-sm font-medium p-1 rounded-lg cursor-pointer">race</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-4 text-indigo-800">Imagem</h2>
+            <div class="flex justify-center">
+                <svg viewBox="0 0 200 200" width="200" height="200">
+                    <defs>
+                        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="100" cy="100" r="90" fill="url(#grad)" />
+                    <text x="50%" y="50%" fill="white" font-size="48" text-anchor="middle" alignment-baseline="middle" font-family="Arial, sans-serif">Run</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    // Initialize tabs
+    const tabElements = [
+        {
+            id: 'synonyms-tab',
+            triggerEl: document.querySelector('#synonyms-tab'),
+            targetEl: document.querySelector('#synonyms')
+        },
+        {
+            id: 'antonyms-tab',
+            triggerEl: document.querySelector('#antonyms-tab'),
+            targetEl: document.querySelector('#antonyms')
+        },
+        {
+            id: 'inflection-tab',
+            triggerEl: document.querySelector('#inflection-tab'),
+            targetEl: document.querySelector('#inflection')
+        },
+        {
+            id: 'idioms-tab',
+            triggerEl: document.querySelector('#idioms-tab'),
+            targetEl: document.querySelector('#idioms')
+        },
+        {
+            id: 'rhymes-tab',
+            triggerEl: document.querySelector('#rhymes-tab'),
+            targetEl: document.querySelector('#rhymes')
+        },
+    ];
+
+    const options = {
+        defaultTabId: 'synonyms-tab',
+        activeClasses: 'text-blue-600 hover:text-blue-600 border-blue-600',
+        inactiveClasses: 'text-gray-500 hover:text-gray-600 border-gray-100 hover:border-gray-300',
+        onShow: () => {
+            console.log('tab is shown');
+        }
+    };
+
+    const tabs = new Tabs(tabElements, options);
+    tabs.show('synonyms-tab');
+
+</script>
+{% endblock %}

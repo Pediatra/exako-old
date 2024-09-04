@@ -21,6 +21,7 @@ from fluentia.apps.term.models import (
     Term,
     TermDefinition,
     TermExampleLink,
+    TermImage,
     TermLexical,
     TermPronunciation,
 )
@@ -253,18 +254,18 @@ def listen_term_mchoice_exercise(request, exercise_id: int):
             'audio_file',
         )
     )
-    alternatives = {expression: audio_file for expression, audio_file in choices}
+    choices = {expression: audio_file for expression, audio_file in choices}
 
     expression = exercise.term.expression
     audio_file = exercise.term_pronunciation.audio_file
-    alternatives[expression] = audio_file
+    choices[expression] = audio_file
 
-    alternatives = list(alternatives.items())
-    shuffle(alternatives)
-    alternatives = dict(alternatives)
+    choices = list(choices.items())
+    shuffle(choices)
+    choices = dict(choices)
     return schema.ListenMChoiceView(
         header=constants.LISTEN_MCHOICE_HEADER,
-        choices=alternatives,
+        choices=choices,
     )
 
 
@@ -520,3 +521,41 @@ def check_term_definition_mchoice_exercise(
     text = exercise.term_definition.definition
     correct = text.lower() == exercise_schema.text.lower()
     return schema.ExerciseResponse(correct=correct, correct_answer=text)
+
+
+@exercise_router.get(
+    path='/term-image-mchoice/{exercise_id}',
+    response={
+        200: schema.ImageMChoiceView,
+        401: core_schema.NotAuthenticated,
+        404: core_schema.NotFound,
+    },
+    summary='Exercício de multipla escolha sobre imagem de termos.',
+    description='O usuário receberá um audio sobre o termo, no qual será necessário escolher entre as opções a imagem a qual pertence ao termo.',
+)
+def term_image_mchoice_exercise(request, exercise_id: int):
+    exercise = get_object_or_404(
+        Exercise,
+        id=exercise_id,
+        type=ExerciseType.TERM_IMAGE_MCHOICE,
+    )
+
+    distractors = exercise.additional_content.get('distractors')
+    terms_ids = list(sample(distractors, 3))
+    terms_ids.append(exercise.term_id)
+
+    choices = dict(
+        TermImage.objects.filter(term_id__in=terms_ids).values_list(
+            'term__expression', 'image'
+        )
+    )
+    audio_file = exercise.term_pronunciation.audio_file
+
+    choices = list(choices.items())
+    shuffle(choices)
+    choices = dict(choices)
+    return schema.ImageMChoiceView(
+        header=constants.TERM_IMAGE_MCHOICE_HEADER,
+        audio_file=audio_file,
+        choices=choices,
+    )

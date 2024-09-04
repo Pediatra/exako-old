@@ -1,20 +1,26 @@
-from django.db.models import TextChoices
+from django.db.models import IntegerChoices
 from django.utils.translation import gettext as _
 
 
-class ExerciseType(TextChoices):
-    ORDER_SENTENCE = 'order-sentence', _('Order sentence')
-    LISTEN_TERM = 'listen-term', _('Listen term')
-    LISTEN_TERM_MCHOICE = 'listen-term-mchoice', _('Listen term mulitple choice')
-    LISTEN_SENTENCE = 'listen-sentence', _('Listen sentence')
-    SPEAK_TERM = 'speak-term', _('Speak term')
-    SPEAK_SENTENCE = 'speak-sentence', _('Speak sentence')
-    TERM_MCHOICE = 'mchoice-term', _('Mulitple choice term')
+class ExerciseType(IntegerChoices):
+    ORDER_SENTENCE = 0, _('Order sentence')
+    LISTEN_TERM = 1, _('Listen term')
+    LISTEN_TERM_MCHOICE = 2, _('Listen term mulitple choice')
+    LISTEN_SENTENCE = 3, _('Listen sentence')
+    SPEAK_TERM = 4, _('Speak term')
+    SPEAK_SENTENCE = 5, _('Speak sentence')
+    TERM_MCHOICE = 6, _('Mulitple choice term')
     TERM_DEFINITION_MCHOICE = (
-        'mchoice-term-definition',
+        7,
         _('Multiple choice term definition'),
     )
-    RANDOM = 'random', _('Random')
+    TERM_IMAGE_MCHOICE = 8, _('Term image multiple choice')
+    TERM_IMAGE_TEXT_MCHOICE = (
+        9,
+        _('Term text image multiple choice'),
+    )
+    TERM_CONNECTION = 10, _('Term connection')
+    RANDOM = 12, _('Random')
 
 
 ORDER_SENTENCE_HEADER = _('Reordene as palavras para formar a frase correta.')
@@ -25,9 +31,10 @@ LISTEN_MCHOICE_HEADER = _(
 )
 SPEAK_TERM_HEADER = _("Clique no microfone e pronuncie o termo '{term}'.")
 SPEAK_SENTENCE_HEADER = _("Clique no microfone e pronuncie a frase '{sentence}'.")
-MCHOICE_TERM_HEADER = _(
+TERM_MCHOICE_HEADER = _(
     "Complete a frase '{sentence}' escolhendo a alternativa correta abaixo."
 )
-MCHOICE_TERM_DEFINITION_HEADER = _(
+TERM_DEFINITION_MCHOICE_HEADER = _(
     "Escolha a definição correta do termo '{term}' apresentado entre as opções fornecidas."
 )
+TERM_IMAGE_MCHOICE_HEADER = _("Escolha a imagem que corresponda com o termo '{term}'.")

@@ -12,6 +12,7 @@ django-environ = "^0.11.2"
 psycopg2-binary = "^2.9.9"
 django-ninja = "^1.2.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+pillow = "^10.4.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"

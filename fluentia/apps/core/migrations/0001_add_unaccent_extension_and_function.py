@@ -11,6 +11,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             """
+            CREATE EXTENSION IF NOT EXISTS pg_trgm;
             CREATE EXTENSION IF NOT EXISTS unaccent;
             CREATE OR REPLACE FUNCTION clean_text(text_value TEXT)
             RETURNS TEXT AS

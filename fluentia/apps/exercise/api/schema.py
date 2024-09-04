@@ -1,8 +1,7 @@
 from django.forms import model_to_dict
 from django.urls import reverse_lazy
 from ninja import Field, Schema
-from pydantic import computed_field, model_validator
-from typing_extensions import ClassVar
+from pydantic import computed_field, field_validator, model_validator
 
 from fluentia.apps.exercise.constants import ExerciseType
 from fluentia.apps.term.constants import Language
@@ -11,50 +10,175 @@ from fluentia.apps.term.constants import Language
 class ExerciseSchemaBase(Schema):
     language: Language
     type: ExerciseType
+
+
+class OrderSentenceSchema(ExerciseSchemaBase):
+    term_example: int
     additional_content: dict | None = Field(
         default=None,
         examples=[{'distractors': [1, 3, 5, 7]}],
     )
 
-
-class OrderSentenceSchema(ExerciseSchemaBase):
-    term_example: int
+    @field_validator('additional_content')
+    @classmethod
+    def validate_distractors(cls, additional_content: dict) -> dict:
+        if 'distractors' in additional_content and not isinstance(
+            additional_content['distractors'], list
+        ):
+            raise ValueError('invalid distractors format, it should be a id list.')
+        return additional_content
 
 
 class ListenTermSchema(ExerciseSchemaBase):
     term_pronunciation: int
     term: int
     term_lexical: int | None = None
+    additional_content: dict | None = Field(
+        default=None,
+        examples=[{'example': 123}],
+    )
 
 
 class ListenSentenceSchema(ExerciseSchemaBase):
     term_pronunciation: int
     term_example: int
+    additional_content: dict | None = Field(
+        default=None,
+        examples=[{'example': 123}],
+    )
 
 
 class ListenTermMChoiceSchema(ExerciseSchemaBase):
     term_pronunciation: int
     term: int
+    additional_content: dict | None = Field(
+        default=None,
+        examples=[{'example': 123}],
+    )
 
 
 class SpeakTermSchema(ExerciseSchemaBase):
     term: int
     term_lexical: int | None = None
+    additional_content: dict | None = Field(
+        default=None,
+        examples=[{'example': 123}],
+    )
 
 
 class SpeakSentenceSchema(ExerciseSchemaBase):
     term_example: int
+    additional_content: dict | None = Field(
+        default=None,
+        examples=[{'example': 123}],
+    )
 
 
-class MChoiceTermSchema(ExerciseSchemaBase):
+class TermMChoiceSchema(ExerciseSchemaBase):
     term: int
     term_example: int
     term_lexical: int | None = None
+    additional_content: dict = Field(
+        examples=[{'distractors': [1, 3, 5, 7]}],
+    )
+
+    @field_validator('additional_content')
+    @classmethod
+    def validate_distractors(cls, additional_content: dict) -> dict:
+        if 'distractors' not in additional_content or not isinstance(
+            additional_content['distractors'], list
+        ):
+            raise ValueError(
+                'invalid distractors format, exercise needs distractors to form the alternatives.'
+            )
+        return additional_content
 
 
-class MChoiceTermDefinitionSchema(ExerciseSchemaBase):
+class TermDefinitionMChoiceSchema(ExerciseSchemaBase):
     term_definition: int
     term: int
+    additional_content: dict = Field(
+        examples=[{'distractors': [1, 3, 5, 7]}],
+    )
+
+    @field_validator('additional_content')
+    @classmethod
+    def validate_distractors(cls, additional_content: dict) -> dict:
+        if 'distractors' not in additional_content or not isinstance(
+            additional_content['distractors'], list
+        ):
+            raise ValueError(
+                'invalid distractors format, exercise needs distractors to form the alternatives.'
+            )
+        return additional_content
+
+
+class TermImageMChoiceSchema(ExerciseSchemaBase):
+    term: int
+    term_image: int
+    term_pronunciation: int
+    additional_content: dict = Field(
+        examples=[{'distractors': [1, 3, 5, 7]}],
+    )
+
+    @field_validator('additional_content')
+    @classmethod
+    def validate_distractors(cls, additional_content: dict) -> dict:
+        if 'distractors' not in additional_content or not isinstance(
+            additional_content['distractors'], list
+        ):
+            raise ValueError(
+                'invalid distractors format, exercise needs distractors to form the alternatives.'
+            )
+        return additional_content
+
+
+class TermImageTextMChoiceSchema(ExerciseSchemaBase):
+    term: int
+    term_image: int
+    additional_content: dict = Field(
+        examples=[{'distractors': [1, 3, 5, 7]}],
+    )
+
+    @field_validator('additional_content')
+    @classmethod
+    def validate_distractors(cls, additional_content: dict) -> dict:
+        if 'distractors' not in additional_content or not isinstance(
+            additional_content['distractors'], list
+        ):
+            raise ValueError(
+                'invalid distractors format, exercise needs distractors to form the alternatives.'
+            )
+        return additional_content
+
+
+class TermConnectionSchema(ExerciseSchemaBase):
+    term: int
+    additional_content: dict = Field(
+        examples=[
+            {
+                'distractors': [1, 3, 5, 7, 8, 9, 11, 12],
+                'connections': [1, 5, 7, 9],
+            }
+        ],
+    )
+
+    @field_validator('additional_content')
+    @classmethod
+    def validate_distractors(cls, additional_content: dict) -> dict:
+        if 'distractors' not in additional_content or not isinstance(
+            additional_content['distractors'], list
+        ):
+            raise ValueError(
+                'invalid distractors format, exercise needs distractors to form the connections.'
+            )
+        if 'connections' not in additional_content or not isinstance(
+            additional_content['connections'], list
+        ):
+            raise ValueError(
+                'invalid connections format, exercise needs connections to form the connections.'
+            )
+        return additional_content
 
 
 exercise_models: dict[ExerciseType, type[ExerciseSchemaBase]] = {
@@ -64,8 +188,11 @@ exercise_models: dict[ExerciseType, type[ExerciseSchemaBase]] = {
     ExerciseType.LISTEN_TERM_MCHOICE: ListenTermMChoiceSchema,
     ExerciseType.SPEAK_TERM: SpeakTermSchema,
     ExerciseType.SPEAK_SENTENCE: SpeakSentenceSchema,
-    ExerciseType.TERM_MCHOICE: MChoiceTermSchema,
-    ExerciseType.TERM_DEFINITION_MCHOICE: MChoiceTermDefinitionSchema,
+    ExerciseType.TERM_MCHOICE: TermMChoiceSchema,
+    ExerciseType.TERM_DEFINITION_MCHOICE: TermDefinitionMChoiceSchema,
+    ExerciseType.TERM_IMAGE_MCHOICE: TermImageMChoiceSchema,
+    ExerciseType.TERM_IMAGE_TEXT_MCHOICE: TermImageTextMChoiceSchema,
+    ExerciseType.TERM_CONNECTION: TermConnectionSchema,
 }
 
 
@@ -75,8 +202,8 @@ class ExerciseSchema(ExerciseSchemaBase):
     term_pronunciation: int | None = None
     term_lexical: int | None = None
     term_definition: int | None = None
-
-    exercise_model: ClassVar[type[ExerciseSchemaBase]]
+    term_image: int | None = None
+    additional_content: dict | None = Field(default=None)
 
     @model_validator(mode='before')
     @classmethod
@@ -112,6 +239,9 @@ class ExerciseView(Schema):
             ExerciseType.SPEAK_SENTENCE: 'api-1.0.0:speak_sentence_exercise',
             ExerciseType.TERM_MCHOICE: 'api-1.0.0:term_mchoice_exercise',
             ExerciseType.TERM_DEFINITION_MCHOICE: 'api-1.0.0:term_definition_mchoice_exercise',
+            ExerciseType.TERM_IMAGE_MCHOICE: 'api-1.0.0:term_definition_mchoice_exercise',
+            ExerciseType.TERM_IMAGE_TEXT_MCHOICE: 'api-1.0.0:term_definition_mchoice_exercise',
+            ExerciseType.TERM_CONNECTION: 'api-1.0.0:term_definition_mchoice_exercise',
         }
 
         url_name = url_map[self.type]
@@ -167,4 +297,21 @@ class MultipleChoiceView(ExerciseBaseView):
     choices: list[str] = Field(
         examples=[['casa', 'fogueira', 'semana', 'avião']],
         description='Será retornado sempre 4 alternativas, incluindo a correta.',
+    )
+
+
+class ImageMChoiceView(ExerciseBaseView):
+    audio_file: str
+    choices: dict[str, str] = Field(
+        examples=[
+            [
+                {
+                    'casa': 'https://example.com',
+                    'fogueira': 'https://example.com',
+                    'semana': 'https://example.com',
+                    'avião': 'https://example.com',
+                }
+            ]
+        ],
+        description='Será retornado sempre 4 alternativas contendo o nome do termo referido e o link para imagem do termo.',
     )

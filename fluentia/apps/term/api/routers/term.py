@@ -11,6 +11,7 @@ from fluentia.apps.term import constants
 from fluentia.apps.term.api import schema
 from fluentia.apps.term.api.routers.definition import definition_router
 from fluentia.apps.term.api.routers.example import example_router
+from fluentia.apps.term.api.routers.image import image_router
 from fluentia.apps.term.api.routers.lexical import lexical_router
 from fluentia.apps.term.api.routers.pronunciation import pronunciation_router
 from fluentia.apps.term.models import Term, TermDefinitionTranslation, TermLexical
@@ -22,6 +23,7 @@ term_router.add_router('/definition', definition_router, tags=['Definição'])
 term_router.add_router('/example', example_router, tags=['Exemplo'])
 term_router.add_router('/lexical', lexical_router, tags=['Léxico'])
 term_router.add_router('/exercise', exercise_router, tags=['Exercício'])
+term_router.add_router('/image', image_router, tags=['Imagem'])
 
 
 @term_router.post(
@@ -108,18 +110,16 @@ def search_term(
 ):
     return Term.objects.filter(
         models.Q(
-            expression__ct_icontains=expression,
+            expression__ct_similarity=expression,
             origin_language=origin_language,
         )
         | models.Q(
-            expression__in=models.Subquery(
-                TermLexical.objects.select_related('term')
-                .filter(
-                    value__ct_icontains=expression,
+            id__in=models.Subquery(
+                TermLexical.objects.filter(
+                    type=constants.TermLexicalType.INFLECTION,
+                    value__ct_similarity=expression,
                     term__origin_language=models.OuterRef('origin_language'),
-                    type=constants.TermLexicalType.FORM,
-                )
-                .values_list('term__expression', flat=True)
+                ).values_list('term_id', flat=True)
             ),
         ),
     )
@@ -139,16 +139,12 @@ def search_meaning(
     translation_language: constants.Language,
 ):
     return Term.objects.filter(
-        expression__in=models.Subquery(
-            TermDefinitionTranslation.objects.select_related(
-                'term_definition', 'term_definition__term'
-            )
-            .filter(
+        id__in=models.Subquery(
+            TermDefinitionTranslation.objects.filter(
                 term_definition__term__origin_language=origin_language,
-                meaning__ct_icontains=expression,
+                meaning__ct_similarity=expression,
                 language=translation_language,
-            )
-            .values('term_definition__term__expression')
+            ).values('term_definition__term_id')
         )
     )
 

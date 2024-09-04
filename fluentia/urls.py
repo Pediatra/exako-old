@@ -17,7 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.http import Http404
-from django.urls import path
+from django.urls import include, path
 from ninja import NinjaAPI
 
 from fluentia.apps.card.api.routers import card_router
@@ -34,6 +34,7 @@ api.add_router('card/', card_router)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls),
+    path('', include('fluentia.apps.term.urls'))
 ]
 
 

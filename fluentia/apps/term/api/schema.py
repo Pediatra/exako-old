@@ -290,3 +290,11 @@ class TermLexicalView(Schema):
 class TermLexicalFilter(FilterSchema):
     term: int
     type: constants.TermLexicalType | None = None
+
+
+class TermImageSchema(Schema):
+    term: int
+
+
+class TermImageView(Schema):
+    image: str

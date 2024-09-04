@@ -270,7 +270,7 @@ def test_list_term_lexical_empty(client):
     term = TermFactory()
     TermLexicalFactory.create_batch(
         term=term,
-        type=TermLexicalType.FORM,
+        type=TermLexicalType.INFLECTION,
         size=5,
     )
 

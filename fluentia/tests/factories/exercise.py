@@ -3,18 +3,12 @@ import factory
 from fluentia.apps.exercise.constants import ExerciseType
 from fluentia.apps.exercise.models import Exercise
 from fluentia.apps.term.constants import Language, TermLexicalType
-from fluentia.apps.term.models import (
-    Term,
-    TermDefinition,
-    TermExample,
-    TermExampleLink,
-    TermLexical,
-    TermPronunciation,
-)
+from fluentia.apps.term.models import TermExampleLink
 from fluentia.tests.factories.term import (
     TermDefinitionFactory,
     TermExampleFactory,
     TermFactory,
+    TermImageFactory,
     TermLexicalFactory,
     TermPronunciationFactory,
 )
@@ -24,42 +18,22 @@ class _ExerciseBase(factory.django.DjangoModelFactory):
     language = factory.fuzzy.FuzzyChoice(Language)
 
     @classmethod
-    def _build(cls, *args, **kwargs):
-        factories = {
-            Term: TermFactory,
-            TermExample: TermExampleFactory,
-            TermPronunciation: TermPronunciationFactory,
-            TermLexical: TermLexicalFactory,
-            TermDefinition: TermDefinitionFactory,
-        }
-        to_update = {}
-        for key, value in kwargs.items():
-            factory = factories.get(value.__class__)
-            if factory:
-                if value.id is not None:
-                    continue
-                to_update[key] = factory()
-        kwargs.update(to_update)
-        return super()._build(*args, **kwargs)
-
-    @classmethod
-    def _create(cls, *args, **kwargs):
-        factories = {
-            Term: TermFactory,
-            TermExample: TermExampleFactory,
-            TermPronunciation: TermPronunciationFactory,
-            TermLexical: TermLexicalFactory,
-            TermDefinition: TermDefinitionFactory,
-        }
-        to_update = {}
-        for key, value in kwargs.items():
-            factory = factories.get(value.__class__)
-            if factory:
-                if value.id is not None:
-                    continue
-                to_update[key] = factory()
-        kwargs.update(to_update)
-        return super()._create(*args, **kwargs)
+    def build(cls, *args, **kwargs):
+        build = super().build(*args, **kwargs)
+        foreign_keys = [
+            'term',
+            'term_example',
+            'term_pronunciation',
+            'term_lexical',
+            'term_definition',
+            'term_image',
+        ]
+        for fk in foreign_keys:
+            obj = getattr(build, fk, None)
+            if obj is None:
+                continue
+            obj.save()
+        return build
 
     class Meta:
         model = Exercise
@@ -76,13 +50,13 @@ class OrderSentenceFactory(_ExerciseBase):
 
     @classmethod
     def _build(cls, *args, **kwargs):
-        additional_content = {'distractors': OrderSentenceFactory._make_distractors()}
+        additional_content = {'distractors': cls._make_distractors()}
         kwargs.update(additional_content=additional_content)
         return super()._build(*args, **kwargs)
 
     @classmethod
     def _create(cls, *args, **kwargs):
-        additional_content = {'distractors': OrderSentenceFactory._make_distractors()}
+        additional_content = {'distractors': cls._make_distractors()}
         kwargs.update(additional_content=additional_content)
         return super()._create(*args, **kwargs)
 
@@ -90,23 +64,36 @@ class OrderSentenceFactory(_ExerciseBase):
 class ListenTermFactory(_ExerciseBase):
     type = ExerciseType.LISTEN_TERM
     term = factory.SubFactory(TermFactory)
-    term_pronunciation = factory.SubFactory(TermPronunciationFactory)
+    term_pronunciation = factory.SubFactory(
+        TermPronunciationFactory,
+        term=factory.SelfAttribute('..term'),
+    )
 
 
 class ListenTermLexicalFactory(ListenTermFactory):
-    term_lexical = factory.SubFactory(TermLexicalFactory)
+    term_lexical = factory.SubFactory(
+        TermLexicalFactory,
+        term=factory.SelfAttribute('..term'),
+    )
 
 
 class ListenSentenceFactory(_ExerciseBase):
     type = ExerciseType.LISTEN_SENTENCE
     term_example = factory.SubFactory(TermExampleFactory)
-    term_pronunciation = factory.SubFactory(TermPronunciationFactory)
+    term_pronunciation = factory.SubFactory(
+        TermPronunciationFactory,
+        term=None,
+        term_example=factory.SelfAttribute('..term_example'),
+    )
 
 
 class ListenTermMChoiceFactory(_ExerciseBase):
     type = ExerciseType.LISTEN_TERM_MCHOICE
     term = factory.SubFactory(TermFactory)
-    term_pronunciation = factory.SubFactory(TermPronunciationFactory)
+    term_pronunciation = factory.SubFactory(
+        TermPronunciationFactory,
+        term=factory.SelfAttribute('..term'),
+    )
 
     @staticmethod
     def _make_alternatives(term):
@@ -121,14 +108,14 @@ class ListenTermMChoiceFactory(_ExerciseBase):
         [TermPronunciationFactory(term=lexical.term_value_ref) for lexical in lexicals]
 
     @classmethod
-    def _build(cls, *args, **kwargs):
-        exercise = super()._build(*args, **kwargs)
-        ListenTermMChoiceFactory._make_alternatives(exercise.term)
+    def build(cls, *args, **kwargs):
+        exercise = super().build(*args, **kwargs)
+        cls._make_alternatives(exercise.term)
         return exercise
 
     @classmethod
     def _create(cls, *args, **kwargs):
-        ListenTermMChoiceFactory._make_alternatives(kwargs.get('term'))
+        cls._make_alternatives(kwargs.get('term'))
         return super()._create(*args, **kwargs)
 
 
@@ -138,7 +125,10 @@ class SpeakTermFactory(_ExerciseBase):
 
 
 class SpeakTermLexicalFactory(SpeakTermFactory):
-    term_lexical = factory.SubFactory(TermLexicalFactory)
+    term_lexical = factory.SubFactory(
+        TermLexicalFactory,
+        term=factory.SelfAttribute('..term'),
+    )
 
 
 class SpeakSentenceFactory(_ExerciseBase):
@@ -158,9 +148,7 @@ class TermMChoiceFactory(_ExerciseBase):
 
     @classmethod
     def _build(cls, *args, **kwargs):
-        kwargs.update(
-            additional_content={'distractors': TermMChoiceFactory._make_distractors()}
-        )
+        kwargs.update(additional_content={'distractors': cls._make_distractors()})
         return super()._build(*args, **kwargs)
 
     @classmethod
@@ -171,9 +159,7 @@ class TermMChoiceFactory(_ExerciseBase):
             term=kwargs.get('term'),
             term_lexical=kwargs.get('term_lexical'),
         )
-        kwargs.update(
-            additional_content={'distractors': TermMChoiceFactory._make_distractors()}
-        )
+        kwargs.update(additional_content={'distractors': cls._make_distractors()})
         return super()._create(*args, **kwargs)
 
     @classmethod
@@ -189,13 +175,20 @@ class TermMChoiceFactory(_ExerciseBase):
 
 
 class TermLexicalMChoiceFactory(TermMChoiceFactory):
-    term_lexical = factory.SubFactory(TermLexicalFactory)
+    term_lexical = factory.SubFactory(
+        TermLexicalFactory,
+        term=factory.SelfAttribute('..term'),
+    )
 
 
 class TermDefinitionMChoiceFactory(_ExerciseBase):
     type = ExerciseType.TERM_DEFINITION_MCHOICE
     term = factory.SubFactory(TermFactory)
-    term_definition = factory.SubFactory(TermDefinitionFactory)
+    term_definition = factory.SubFactory(
+        TermDefinitionFactory,
+        term_lexical=None,
+        term=factory.SelfAttribute('..term'),
+    )
 
     @staticmethod
     def _make_distractors():
@@ -203,19 +196,99 @@ class TermDefinitionMChoiceFactory(_ExerciseBase):
         return [distractor.id for distractor in distractors]
 
     @classmethod
-    def _build(cls, *args, **kwargs):
-        kwargs.update(
-            additional_content={
-                'distractors': TermDefinitionMChoiceFactory._make_distractors()
-            }
-        )
-        return super()._build(*args, **kwargs)
+    def build(cls, *args, **kwargs):
+        kwargs.update(additional_content={'distractors': cls._make_distractors()})
+        return super().build(*args, **kwargs)
 
     @classmethod
-    def _create(cls, *args, **kwargs):
+    def create(cls, *args, **kwargs):
+        kwargs.update(additional_content={'distractors': cls._make_distractors()})
+        return super().create(*args, **kwargs)
+
+
+class TermImageMChoiceFactory(_ExerciseBase):
+    type = ExerciseType.TERM_IMAGE_MCHOICE
+    term = factory.SubFactory(TermFactory)
+    term_image = factory.SubFactory(
+        TermImageFactory,
+        term=factory.SelfAttribute('..term'),
+    )
+    term_pronunciation = factory.SubFactory(
+        TermPronunciationFactory,
+        term=factory.SelfAttribute('..term'),
+    )
+
+    @staticmethod
+    def _make_distractors():
+        distractors = TermFactory.create_batch(size=3)
+        [TermImageFactory(term=distractor) for distractor in distractors]
+        return [distractor.id for distractor in distractors]
+
+    @classmethod
+    def build(cls, *args, **kwargs):
+        kwargs.update(additional_content={'distractors': cls._make_distractors()})
+        return super().build(*args, **kwargs)
+
+    @classmethod
+    def create(cls, *args, **kwargs):
+        kwargs.update(additional_content={'distractors': cls._make_distractors()})
+        return super().create(*args, **kwargs)
+
+
+class TermImageMChoiceTextFactory(_ExerciseBase):
+    type = ExerciseType.TERM_IMAGE_TEXT_MCHOICE
+    term = factory.SubFactory(TermFactory)
+    term_image = factory.SubFactory(
+        TermImageFactory,
+        term=factory.SelfAttribute('..term'),
+    )
+
+    @staticmethod
+    def _make_distractors():
+        distractors = TermFactory.create_batch(size=3)
+        return [distractor.id for distractor in distractors]
+
+    @classmethod
+    def build(cls, *args, **kwargs):
+        kwargs.update(additional_content={'distractors': cls._make_distractors()})
+        return super().build(*args, **kwargs)
+
+    @classmethod
+    def create(cls, *args, **kwargs):
+        kwargs.update(additional_content={'distractors': cls._make_distractors()})
+        return super().create(*args, **kwargs)
+
+
+class TermConnectionFactory(_ExerciseBase):
+    type = ExerciseType.TERM_CONNECTION
+    term = factory.SubFactory(TermFactory)
+
+    @staticmethod
+    def _make_distractors():
+        distractors = TermFactory.create_batch(size=8)
+        return [distractor.id for distractor in distractors]
+
+    @staticmethod
+    def _make_connections():
+        connections = TermFactory.create_batch(size=8)
+        return [connection.id for connection in connections]
+
+    @classmethod
+    def build(cls, *args, **kwargs):
         kwargs.update(
             additional_content={
-                'distractors': TermDefinitionMChoiceFactory._make_distractors()
+                'distractors': cls._make_distractors(),
+                'connections': cls._make_connections(),
             }
         )
-        return super()._create(*args, **kwargs)
+        return super().build(*args, **kwargs)
+
+    @classmethod
+    def create(cls, *args, **kwargs):
+        kwargs.update(
+            additional_content={
+                'distractors': cls._make_distractors(),
+                'connections': cls._make_connections(),
+            }
+        )
+        return super().create(*args, **kwargs)

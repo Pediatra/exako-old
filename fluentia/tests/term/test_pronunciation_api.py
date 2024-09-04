@@ -69,7 +69,7 @@ def test_create_term_pronunciation_example(client, generate_payload, token_heade
 
 @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
 def test_create_term_pronunciation_lexical(client, generate_payload, token_header):
-    term_lexical = TermLexicalFactory(type=TermLexicalType.FORM)
+    term_lexical = TermLexicalFactory(type=TermLexicalType.INFLECTION)
     payload = generate_payload(TermPronunciationFactory, term_lexical=term_lexical)
 
     response = client.post(
@@ -253,7 +253,7 @@ def test_get_term_pronunciation_example(client):
 
 
 def test_get_term_pronunciation_lexical(client):
-    term_lexical = TermLexicalFactory(type=TermLexicalType.FORM)
+    term_lexical = TermLexicalFactory(type=TermLexicalType.INFLECTION)
     pronunciation = TermPronunciationFactory(term_lexical=term_lexical)
     TermPronunciationFactory.create_batch(5)
 
