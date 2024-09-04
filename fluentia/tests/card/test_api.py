@@ -46,6 +46,7 @@ class TestCardSet:
         assert CardSetSchemaView(**response.json()) == CardSetSchemaView(
             id=response.json()['id'],
             created_at=response.json()['created_at'],
+            last_review=response.json()['last_review'],
             **payload,
         )
 
@@ -151,7 +152,7 @@ class TestCardSet:
         assert response.status_code == 200
         assert cardset.name == payload['name']
         assert cardset.description == payload['description']
-        assert cardset.updated_at is not None
+        assert cardset.last_review is not None
 
     def test_update_cardset_user_is_not_authenticated(self, client, generate_payload):
         cardset = CardSetFactory()

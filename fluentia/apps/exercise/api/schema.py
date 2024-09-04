@@ -239,9 +239,9 @@ class ExerciseView(Schema):
             ExerciseType.SPEAK_SENTENCE: 'api-1.0.0:speak_sentence_exercise',
             ExerciseType.TERM_MCHOICE: 'api-1.0.0:term_mchoice_exercise',
             ExerciseType.TERM_DEFINITION_MCHOICE: 'api-1.0.0:term_definition_mchoice_exercise',
-            ExerciseType.TERM_IMAGE_MCHOICE: 'api-1.0.0:term_definition_mchoice_exercise',
-            ExerciseType.TERM_IMAGE_TEXT_MCHOICE: 'api-1.0.0:term_definition_mchoice_exercise',
-            ExerciseType.TERM_CONNECTION: 'api-1.0.0:term_definition_mchoice_exercise',
+            ExerciseType.TERM_IMAGE_MCHOICE: 'api-1.0.0:term_image_mchoice_exercise',
+            ExerciseType.TERM_IMAGE_TEXT_MCHOICE: 'api-1.0.0:term_image_text_mchoice_exercise',
+            ExerciseType.TERM_CONNECTION: 'api-1.0.0:term_connection_exercise',
         }
 
         url_name = url_map[self.type]
@@ -302,16 +302,40 @@ class MultipleChoiceView(ExerciseBaseView):
 
 class ImageMChoiceView(ExerciseBaseView):
     audio_file: str
-    choices: dict[str, str] = Field(
+    choices: dict[int, str] = Field(
         examples=[
             [
                 {
-                    'casa': 'https://example.com',
-                    'fogueira': 'https://example.com',
-                    'semana': 'https://example.com',
-                    'avião': 'https://example.com',
+                    1: 'https://example.com',
+                    2: 'https://example.com',
+                    3: 'https://example.com',
+                    4: 'https://example.com',
                 }
             ]
         ],
-        description='Será retornado sempre 4 alternativas contendo o nome do termo referido e o link para imagem do termo.',
+        description='Será retornado sempre 4 alternativas contendo o id do termo referido e o link para imagem do termo.',
     )
+
+
+class TextImageMChoiceView(ExerciseBaseView):
+    image: str
+    choices: list[str] = Field(examples=[['casa', 'avião', 'jaguar', 'parede']])
+
+
+class TextConnectionView(ExerciseBaseView):
+    choices: dict[int, str] = Field(
+        examples=[
+            [
+                {
+                    1: 'casa',
+                    2: 'avião',
+                    3: 'jaguar',
+                    4: 'parede',
+                }
+            ]
+        ],
+    )
+
+
+class TextConnectionCheck(Schema):
+    choices: list[int] = Field(min_length=4, max_length=4)

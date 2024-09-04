@@ -63,6 +63,20 @@ def term_image_mchoice_router(exercise_id):
     )
 
 
+def term_image_text_mchoice_router(exercise_id):
+    return reverse_lazy(
+        'api-1.0.0:term_image_text_mchoice_exercise',
+        kwargs={'exercise_id': exercise_id},
+    )
+
+
+def term_connection_router(exercise_id):
+    return reverse_lazy(
+        'api-1.0.0:term_connection_exercise',
+        kwargs={'exercise_id': exercise_id},
+    )
+
+
 def test_order_sentence_exercise(client, token_header):
     exercise = exercise_factory.OrderSentenceFactory()
 
@@ -572,3 +586,125 @@ def test_term_image_mchoice_exercise(client, token_header):
     assert response.status_code == 200
     assert len(response.json()['choices']) == 4
     assert response.json()['audio_file'] == exercise.term_pronunciation.audio_file
+    assert response.json()['header'] == constants.TERM_IMAGE_MCHOICE_HEADER
+
+
+def test_check_term_image_mchoice_exercise_correct(client, token_header):
+    exercise = exercise_factory.TermImageMChoiceFactory()
+
+    response = client.post(
+        f'{term_image_mchoice_router(exercise.id)}?term_id={exercise.term_id}',
+        headers=token_header,
+    )
+
+    assert response.status_code == 200
+    assert response.json()['correct'] is True
+    assert response.json()['correct_answer'] == str(exercise.term_id)
+
+
+def test_check_term_image_mchoice_exercise_incorrect(client, token_header):
+    exercise = exercise_factory.TermImageMChoiceFactory()
+
+    response = client.post(
+        f'{term_image_mchoice_router(exercise.id)}?term_id=9157815',
+        headers=token_header,
+    )
+
+    assert response.status_code == 200
+    assert response.json()['correct'] is False
+    assert response.json()['correct_answer'] == str(exercise.term_id)
+
+
+def test_term_image_text_mchoice_exercise(client, token_header):
+    exercise = exercise_factory.TermImageMChoiceTextFactory()
+
+    response = client.get(
+        term_image_text_mchoice_router(exercise.id), headers=token_header
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()['choices']) == 4
+    assert response.json()['image'] == exercise.term_image.image.url
+    assert response.json()['header'] == constants.TERM_IMAGE_TEXT_MCHOICE_HEADER
+
+
+def test_check_term_image_text_mchoice_exercise_correct(client, token_header):
+    exercise = exercise_factory.TermImageMChoiceTextFactory()
+    payload = {'text': exercise.term.expression}
+
+    response = client.post(
+        term_image_text_mchoice_router(exercise.id),
+        payload,
+        headers=token_header,
+        content_type='application/json',
+    )
+
+    assert response.status_code == 200
+    assert response.json()['correct'] is True
+    assert response.json()['correct_answer'] == exercise.term.expression
+
+
+def test_check_term_image_text_mchoice_exercise_incorrect(client, token_header):
+    exercise = exercise_factory.TermImageMChoiceTextFactory()
+    payload = {'text': exercise.term.expression + 'a'}
+
+    response = client.post(
+        term_image_text_mchoice_router(exercise.id),
+        payload,
+        headers=token_header,
+        content_type='application/json',
+    )
+
+    assert response.status_code == 200
+    assert response.json()['correct'] is False
+    assert response.json()['correct_answer'] == exercise.term.expression
+
+
+def test_term_connection_exercise(client, token_header):
+    exercise = exercise_factory.TermConnectionFactory()
+
+    response = client.get(term_connection_router(exercise.id), headers=token_header)
+
+    assert response.status_code == 200
+    assert len(response.json()['choices']) == 12
+    assert response.json()['header'] == constants.TERM_CONNECTION_HEADER.format(
+        term=exercise.term.expression
+    )
+
+
+def test_check_term_connection_exercise_correct(client, token_header):
+    exercise = exercise_factory.TermConnectionFactory()
+    payload = {'choices': exercise.additional_content['connections'][:4]}
+
+    response = client.post(
+        term_connection_router(exercise.id),
+        payload,
+        headers=token_header,
+        content_type='application/json',
+    )
+
+    assert response.status_code == 200
+    assert response.json()['correct'] is True
+    assert not response.json()['correct_answer']
+
+
+def test_check_term_connection_exercise_incorrect(client, token_header):
+    exercise = exercise_factory.TermConnectionFactory()
+    payload = {'choices': exercise.additional_content['distractors'][:4]}
+
+    response = client.post(
+        term_connection_router(exercise.id),
+        payload,
+        headers=token_header,
+        content_type='application/json',
+    )
+
+    assert response.status_code == 200
+    assert response.json()['correct'] is False
+    assert response.json()['correct_answer'] == ','.join(
+        list(
+            Term.objects.filter(id__in=payload['choices']).values_list(
+                'expression', flat=True
+            )
+        )
+    )

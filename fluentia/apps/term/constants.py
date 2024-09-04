@@ -53,7 +53,7 @@ class TermLexicalType(IntegerChoices):
 #                 <div class="hidden p-4 rounded-lg bg-gray-50" id="synonyms" role="tabpanel" aria-labelledby="synonyms-tab">
 #                     <h3 class="font-semibold text-lg mb-2 text-indigo-700">Sinônimos</h3>
 #                     <div class="flex flex-wrap gap-2">
-#                         <span class="bg-lime-100 text-lime-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>   
+#                         <span class="bg-lime-100 text-lime-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>
 #                         <span class="bg-lime-100 text-lime-800 text-sm font-medium p-1 rounded-lg cursor-pointer">dash</span>
 #                         <span class="bg-lime-100 text-lime-800 text-sm font-medium p-1 rounded-lg cursor-pointer">jog</span>
 #                         <span class="bg-lime-100 text-lime-800 text-sm font-medium p-1 rounded-lg cursor-pointer">race</span>
@@ -62,7 +62,7 @@ class TermLexicalType(IntegerChoices):
 #                 <div class="hidden p-4 rounded-lg bg-gray-50" id="antonyms" role="tabpanel" aria-labelledby="antonyms-tab">
 #                     <h3 class="font-semibold text-lg mb-2 text-indigo-700">Antônimos</h3>
 #                     <div class="flex flex-wrap gap-2">
-#                         <span class="bg-red-100 text-red-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>   
+#                         <span class="bg-red-100 text-red-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>
 #                         <span class="bg-red-100 text-red-800 text-sm font-medium p-1 rounded-lg cursor-pointer">dash</span>
 #                         <span class="bg-red-100 text-red-800 text-sm font-medium p-1 rounded-lg cursor-pointer">jog</span>
 #                         <span class="bg-red-100 text-red-800 text-sm font-medium p-1 rounded-lg cursor-pointer">race</span>
@@ -71,7 +71,7 @@ class TermLexicalType(IntegerChoices):
 #                 <div class="hidden p-4 rounded-lg bg-gray-50" id="inflection" role="tabpanel" aria-labelledby="inflection-tab">
 #                     <h3 class="font-semibold text-lg mb-2 text-indigo-700">Inflexões</h3>
 #                     <div class="flex flex-wrap gap-2">
-#                         <span class="bg-sky-100 text-sky-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>   
+#                         <span class="bg-sky-100 text-sky-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>
 #                         <span class="bg-sky-100 text-sky-800 text-sm font-medium p-1 rounded-lg cursor-pointer">dash</span>
 #                         <span class="bg-sky-100 text-sky-800 text-sm font-medium p-1 rounded-lg cursor-pointer">jog</span>
 #                         <span class="bg-sky-100 text-sky-800 text-sm font-medium p-1 rounded-lg cursor-pointer">race</span>
@@ -80,7 +80,7 @@ class TermLexicalType(IntegerChoices):
 #                 <div class="hidden p-4 rounded-lg bg-gray-50" id="idioms" role="tabpanel" aria-labelledby="idioms-tab">
 #                     <h3 class="font-semibold text-lg mb-2 text-indigo-700">Expressões Idiomáticas</h3>
 #                     <div class="flex flex-wrap gap-2">
-#                         <span class="bg-amber-100 text-amber-800 text-sm font-medium p-1 rounded-lg cursor-pointer">run out of time</span>   
+#                         <span class="bg-amber-100 text-amber-800 text-sm font-medium p-1 rounded-lg cursor-pointer">run out of time</span>
 #                         <span class="bg-amber-100 text-amber-800 text-sm font-medium p-1 rounded-lg cursor-pointer">run into trouble</span>
 #                         <span class="bg-amber-100 text-amber-800 text-sm font-medium p-1 rounded-lg cursor-pointer">run into trouble</span>
 #                         <span class="bg-amber-100 text-amber-800 text-sm font-medium p-1 rounded-lg cursor-pointer">run into trouble</span>
@@ -89,7 +89,7 @@ class TermLexicalType(IntegerChoices):
 #                 <div class="hidden p-4 rounded-lg bg-gray-50" id="rhymes" role="tabpanel" aria-labelledby="rhymes-tab">
 #                     <h3 class="font-semibold text-lg mb-2 text-indigo-700">Rimas</h3>
 #                     <div class="flex flex-wrap gap-2">
-#                         <span class="bg-indigo-100 text-indigo-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>   
+#                         <span class="bg-indigo-100 text-indigo-800 text-sm font-medium p-1 rounded-lg cursor-pointer">stunning</span>
 #                         <span class="bg-indigo-100 text-indigo-800 text-sm font-medium p-1 rounded-lg cursor-pointer">dash</span>
 #                         <span class="bg-indigo-100 text-indigo-800 text-sm font-medium p-1 rounded-lg cursor-pointer">jog</span>
 #                         <span class="bg-indigo-100 text-indigo-800 text-sm font-medium p-1 rounded-lg cursor-pointer">race</span>

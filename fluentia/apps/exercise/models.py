@@ -405,10 +405,10 @@ def validate_term_connection_distractors(sender, instance, **kwargs):
         ).values_list('id', flat=True)
     )
 
-    if len(connections_term_ids) < 3:
+    if len(connections_term_ids) < 4:
         raise HttpError(
             status_code=422,
-            message='exercise needs at least 3 additional_content[connections] to form the connections.',
+            message='exercise needs at least 4 additional_content[connections] to form the connections.',
         )
 
     instance.additional_content['distractors'] = distractors_term_ids

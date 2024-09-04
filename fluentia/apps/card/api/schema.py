@@ -24,7 +24,7 @@ class CardSetList(FilterSchema):
 class CardSetSchemaView(CardSetSchema):
     id: int
     created_at: datetime
-    modified_at: datetime | None = None
+    last_review: datetime | None = None
 
 
 class CardSetSchemaUpdate(Schema):

@@ -34,7 +34,7 @@ api.add_router('card/', card_router)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls),
-    path('', include('fluentia.apps.term.urls'))
+    path('', include('fluentia.apps.term.urls')),
 ]
 
 

@@ -520,7 +520,7 @@ def test_create_term_connection_exercise_invalid_connections(
     assert response.status_code == 422
     assert (
         response.json()['detail']
-        == 'exercise needs at least 3 additional_content[connections] to form the connections.'
+        == 'exercise needs at least 4 additional_content[connections] to form the connections.'
     )
 
 

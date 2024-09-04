@@ -434,7 +434,7 @@ def term_mchoice_exercise(request, exercise_id: int):
 
     shuffle(choices)
     return schema.MultipleChoiceView(
-        header=constants.MCHOICE_TERM_HEADER.format(sentence=sentence),
+        header=constants.TERM_MCHOICE_HEADER.format(sentence=sentence),
         choices=choices,
     )
 
@@ -496,7 +496,7 @@ def term_definition_mchoice_exercise(request, exercise_id: int):
     )
 
     return schema.MultipleChoiceView(
-        header=constants.MCHOICE_TERM_DEFINITION_HEADER.format(
+        header=constants.TERM_DEFINITION_MCHOICE_HEADER.format(
             term=exercise.term.expression
         ),
         choices=choices,
@@ -541,13 +541,11 @@ def term_image_mchoice_exercise(request, exercise_id: int):
     )
 
     distractors = exercise.additional_content.get('distractors')
-    terms_ids = list(sample(distractors, 3))
-    terms_ids.append(exercise.term_id)
+    term_ids = list(sample(distractors, 3))
+    term_ids.append(exercise.term_id)
 
     choices = dict(
-        TermImage.objects.filter(term_id__in=terms_ids).values_list(
-            'term__expression', 'image'
-        )
+        TermImage.objects.filter(term_id__in=term_ids).values_list('term_id', 'image')
     )
     audio_file = exercise.term_pronunciation.audio_file
 
@@ -559,3 +557,147 @@ def term_image_mchoice_exercise(request, exercise_id: int):
         audio_file=audio_file,
         choices=choices,
     )
+
+
+@exercise_router.post(
+    path='/term-image-mchoice/{exercise_id}',
+    response=schema.ExerciseResponse,
+)
+def check_term_image_mchoice_exercise(
+    request,
+    exercise_id: int,
+    term_id: int,
+):
+    exercise = get_object_or_404(
+        Exercise,
+        id=exercise_id,
+        type=ExerciseType.TERM_IMAGE_MCHOICE,
+    )
+
+    correct = exercise.term_id == term_id
+    return schema.ExerciseResponse(
+        correct=correct,
+        correct_answer=str(exercise.term_id),
+    )
+
+
+@exercise_router.get(
+    path='/term-image-text-mchoice/{exercise_id}',
+    response={
+        200: schema.TextImageMChoiceView,
+        401: core_schema.NotAuthenticated,
+        404: core_schema.NotFound,
+    },
+    summary='Exercício de multipla escolha sobre imagem de termos.',
+    description='O usuário receberá um audio sobre o termo, no qual será necessário escolher entre as opções a imagem a qual pertence ao termo.',
+)
+def term_image_text_mchoice_exercise(request, exercise_id: int):
+    exercise = get_object_or_404(
+        Exercise,
+        id=exercise_id,
+        type=ExerciseType.TERM_IMAGE_TEXT_MCHOICE,
+    )
+
+    distractors = exercise.additional_content.get('distractors')
+    term_ids = list(sample(distractors, 3))
+    term_ids.append(exercise.term_id)
+
+    choices = list(
+        Term.objects.filter(id__in=term_ids).values_list('expression', flat=True)
+    )
+
+    shuffle(choices)
+    return schema.TextImageMChoiceView(
+        image=exercise.term_image.image,
+        header=constants.TERM_IMAGE_TEXT_MCHOICE_HEADER,
+        choices=choices,
+    )
+
+
+@exercise_router.post(
+    path='/term-image-text-mchoice/{exercise_id}',
+    response=schema.ExerciseResponse,
+)
+def check_term_image_text_mchoice_exercise(
+    request,
+    exercise_id: int,
+    exercise_schema: schema.TextCheck,
+):
+    exercise = get_object_or_404(
+        Exercise,
+        id=exercise_id,
+        type=ExerciseType.TERM_IMAGE_TEXT_MCHOICE,
+    )
+
+    text = exercise.term.expression
+    correct = text.lower() == exercise_schema.text.lower()
+    return schema.ExerciseResponse(correct=correct, correct_answer=text)
+
+
+@exercise_router.get(
+    path='/term-connection/{exercise_id}',
+    response={
+        200: schema.TextConnectionView,
+        401: core_schema.NotAuthenticated,
+        404: core_schema.NotFound,
+    },
+    summary='Exercício selecionar as conexões entre o termos.',
+    description='O usuário receberá um termo, no qual será necessário selecionar entre as 4 alternativas que tem conexão com o termo.',
+)
+def term_connection_exercise(request, exercise_id: int):
+    exercise = get_object_or_404(
+        Exercise,
+        id=exercise_id,
+        type=ExerciseType.TERM_CONNECTION,
+    )
+
+    distractors = exercise.additional_content.get('distractors')
+    term_ids = list(sample(distractors, 8))
+    connections = exercise.additional_content.get('connections')
+    term_ids.extend(sample(connections, 4))
+
+    choices = dict(Term.objects.filter(id__in=term_ids).values_list('id', 'expression'))
+
+    choices = list(choices.items())
+    shuffle(choices)
+    choices = dict(choices)
+    return schema.TextConnectionView(
+        header=constants.TERM_CONNECTION_HEADER.format(term=exercise.term.expression),
+        choices=choices,
+    )
+
+
+@exercise_router.post(
+    path='/term-connection/{exercise_id}',
+    response=schema.ExerciseResponse,
+)
+def check_term_connection_exercise(
+    request,
+    exercise_id: int,
+    exercise_schema: schema.TextConnectionCheck,
+):
+    exercise = get_object_or_404(
+        Exercise,
+        id=exercise_id,
+        type=ExerciseType.TERM_CONNECTION,
+    )
+
+    correct = all(
+        [
+            choice in exercise.additional_content.get('connections')
+            for choice in exercise_schema.choices
+        ]
+    )
+    wrong_choices = [
+        choice
+        for choice in exercise_schema.choices
+        if choice not in exercise.additional_content.get('connections')
+    ]
+    text = ','.join(
+        list(
+            Term.objects.filter(id__in=wrong_choices).values_list(
+                'expression', flat=True
+            )
+        )
+    )
+    return schema.ExerciseResponse(correct=correct, correct_answer=text)

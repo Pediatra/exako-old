@@ -56,7 +56,6 @@ def insert_speak_term_exercise(sender, instance, created, **kwargs):
 
 
 def insert_speak_term_lexical_exercise(sender, instance, created, **kwargs):
-
     return dict(
         term_lexical=instance,
         language=instance.term.origin_language,
@@ -84,7 +83,6 @@ def insert_mchoice_term_exercise(sender, instance, created, **kwargs):
 
 
 def insert_mchoice_term_lexical_exercise(sender, instance, created, **kwargs):
-
     return dict(
         term_example=instance,
         term=instance,

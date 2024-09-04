@@ -9,7 +9,7 @@ class CardSet(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     created_at = models.DateField(auto_now_add=True)
-    last_review = models.DateField()
+    last_review = models.DateField(auto_now=True)
     language = models.CharField(
         max_length=50,
         choices=Language.choices,
@@ -25,6 +25,6 @@ class CardSet(models.Model):
 class Card(models.Model):
     note = models.TextField(null=True, blank=True)
     created_at = models.DateField(auto_now_add=True)
-    updated_at = models.DateField(auto_now=True)
+    last_review = models.DateField(auto_now=True)
     cardset = models.ForeignKey(CardSet, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
