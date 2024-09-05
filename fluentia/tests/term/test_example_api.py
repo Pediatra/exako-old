@@ -627,7 +627,7 @@ def test_create_term_example_translation_model_invalid_num_highlight(
 
 @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
 @pytest.mark.parametrize(
-    'highlight', [[[1, 4], [4, 6]], [[10, 14], [13, 16]], [[0, 3], [0, 9]]]
+    'highlight', [[[1, 4], [4, 6]], [[3, 6], [4, 7]], [[0, 3], [0, 9]]]
 )
 def test_create_term_example_translation_model_invalid_highlight_interval(
     client, generate_payload, token_header, highlight

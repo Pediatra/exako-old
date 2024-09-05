@@ -70,41 +70,51 @@ def create_exercise(request, exercise_schema: schema.ExerciseSchema):
 @paginate(PageNumberPagination)
 def list_exercise(
     request,
-    language: Language,
-    exercise_type: ExerciseType | None = Query(default=ExerciseType.RANDOM),
-    level: Level | None = Query(
+    language: list[Language] = Query(...),
+    exercise_type: list[ExerciseType] | None = Query(default=ExerciseType.RANDOM),
+    level: list[Level] | None = Query(
         default=None, description='Filtar por dificuldade do termo.'
     ),
-    cardset_id: int | None = Query(
+    cardset_id: list[int] | None = Query(
         default=None, description='Filtrar por conjunto de cartas.'
     ),
     seed: float | None = Query(default_factory=random, le=1, ge=0),
 ):
-    queryset = (
-        Exercise.objects.filter(language=language)
-        .annotate(
-            md5_seed=RandomSeed(
-                models.F('id'),
-                seed=seed,
-                output_field=models.CharField(),
-            )
+    queryset = Exercise.objects.filter(language__in=language).annotate(
+        md5_seed=RandomSeed(
+            models.F('id'),
+            seed=seed,
+            output_field=models.CharField(),
         )
-        .order_by('md5_seed')
     )
 
-    if exercise_type != ExerciseType.RANDOM:
-        queryset = queryset.filter(type=exercise_type)
+    if (
+        exercise_type
+        and isinstance(exercise_type, list)
+        and ExerciseType.RANDOM not in exercise_type
+        or exercise_type != ExerciseType.RANDOM
+    ):
+        queryset = queryset.filter(type__in=exercise_type)
+
+    if level:
+        level_query = ExerciseLevel.objects.filter(level__in=level).values(
+            'exercise_id'
+        )
+        queryset = queryset.filter(id__in=level_query)
 
     if cardset_id:
         cardset_query = Card.objects.filter(
-            cardset__user=request.user, cardset_id=cardset_id
+            cardset__user=request.user, cardset_id__in=cardset_id
         ).values('term')
-        queryset = queryset.filter(models.Q(term__in=cardset_query))
+        cardset_queryset = Exercise.objects.filter(
+            models.Q(term__in=cardset_query),
+        ).annotate(md5_seed=models.Value('0'))
+        queryset = queryset.exclude(
+            id__in=cardset_queryset.values_list('id', flat=True)
+        )
+        queryset = queryset.union(cardset_queryset)
 
-    if level:
-        level_query = ExerciseLevel.objects.filter(level=level).values('exercise_id')
-        queryset = queryset.filter(id__in=level_query)
-    return queryset.values('type', 'id')
+    return queryset.values('type', 'id').order_by('md5_seed')
 
 
 @exercise_router.get(

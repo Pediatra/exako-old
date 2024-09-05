@@ -1,9 +1,9 @@
-from random import random
+from random import choice, random
+from urllib.parse import parse_qsl, urlencode, urlparse
 
 import pytest
 from django.urls import reverse_lazy
 
-from fluentia.apps.core.query import set_url_params
 from fluentia.apps.exercise.api.schema import ExerciseView
 from fluentia.apps.exercise.models import ExerciseLevel
 from fluentia.apps.term.constants import Language, Level
@@ -14,17 +14,37 @@ pytestmark = pytest.mark.django_db
 
 
 def list_exercise_router(
-    language, exercise_type=None, level=None, cardset_id=None, seed=None
+    language,
+    exercise_type=None,
+    level=None,
+    cardset_id=None,
+    seed=None,
 ):
+    params = {
+        'language': language,
+        'exercise_type': exercise_type,
+        'level': level,
+        'cardset_id': cardset_id,
+        'seed': seed,
+    }
     url = str(reverse_lazy('api-1.0.0:list_exercise'))
-    return set_url_params(
-        url,
-        language=language,
-        exercise_type=exercise_type,
-        level=level,
-        cardset_id=cardset_id,
-        seed=seed,
-    )
+    parsed_url = urlparse(url)
+
+    query_params = parse_qsl(parsed_url.query)
+
+    for key, values in params.items():
+        if values is None:
+            continue
+        if isinstance(values, list):
+            for value in values:
+                query_params.append((key, value))
+        else:
+            query_params.append((key, values))
+
+    new_query = urlencode(query_params)
+    new_url = parsed_url._replace(query=new_query).geturl()
+
+    return new_url
 
 
 parametrize_exercies = pytest.mark.parametrize(
@@ -50,17 +70,24 @@ parametrize_exercies = pytest.mark.parametrize(
 
 @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
 @parametrize_exercies
-def test_list_exercise(client, token_header, exercise_factory):
-    exercises = exercise_factory.create_batch(size=5, language=Language.PORTUGUESE)
+@pytest.mark.parametrize(
+    'language',
+    [
+        [Language.PORTUGUESE],
+        [Language.PORTUGUESE, Language.CHINESE, Language.JAPANESE],
+    ],
+)
+def test_list_exercise(client, token_header, exercise_factory, language):
+    exercises = [exercise_factory(language=choice(language)) for _ in range(10)]
     exercise_factory.create_batch(language=Language.ENGLISH, size=5)
 
     response = client.get(
-        list_exercise_router(language=Language.PORTUGUESE),
+        list_exercise_router(language=language),
         headers=token_header,
     )
 
     assert response.status_code == 200
-    assert response.json()['count'] == 5
+    assert response.json()['count'] == 10
     exercise_schema_view = [ExerciseView.from_orm(exercise) for exercise in exercises]
     for item in response.json()['items']:
         assert ExerciseView(**item) in exercise_schema_view
@@ -70,44 +97,146 @@ def test_list_exercise(client, token_header, exercise_factory):
 @pytest.mark.parametrize(
     'factories',
     [
-        (exercise_factory.OrderSentenceFactory, exercise_factory.ListenTermFactory),
-        (exercise_factory.ListenTermFactory, exercise_factory.ListenSentenceFactory),
+        (
+            exercise_factory.OrderSentenceFactory,
+            exercise_factory.SpeakTermFactory,
+            exercise_factory.TermImageMChoiceTextFactory,
+            exercise_factory.ListenSentenceFactory,
+            3,
+        ),
+        (
+            exercise_factory.ListenTermFactory,
+            exercise_factory.TermDefinitionMChoiceFactory,
+            exercise_factory.SpeakSentenceFactory,
+            exercise_factory.OrderSentenceFactory,
+            3,
+        ),
         (
             exercise_factory.ListenSentenceFactory,
+            exercise_factory.TermConnectionFactory,
+            exercise_factory.TermMChoiceFactory,
             exercise_factory.ListenTermMChoiceFactory,
+            3,
         ),
-        (exercise_factory.ListenTermMChoiceFactory, exercise_factory.SpeakTermFactory),
-        (exercise_factory.SpeakTermFactory, exercise_factory.SpeakSentenceFactory),
-        (exercise_factory.SpeakSentenceFactory, exercise_factory.TermMChoiceFactory),
+        (
+            exercise_factory.ListenTermMChoiceFactory,
+            exercise_factory.TermImageMChoiceFactory,
+            exercise_factory.OrderSentenceFactory,
+            exercise_factory.TermDefinitionMChoiceFactory,
+            3,
+        ),
+        (
+            exercise_factory.SpeakTermFactory,
+            exercise_factory.ListenTermFactory,
+            exercise_factory.TermImageMChoiceTextFactory,
+            exercise_factory.TermConnectionFactory,
+            3,
+        ),
+        (
+            exercise_factory.SpeakSentenceFactory,
+            exercise_factory.TermMChoiceFactory,
+            exercise_factory.ListenTermMChoiceFactory,
+            exercise_factory.TermImageMChoiceFactory,
+            3,
+        ),
         (
             exercise_factory.TermMChoiceFactory,
-            exercise_factory.TermDefinitionMChoiceFactory,
+            exercise_factory.SpeakSentenceFactory,
+            exercise_factory.ListenSentenceFactory,
+            exercise_factory.OrderSentenceFactory,
+            3,
         ),
         (
             exercise_factory.TermDefinitionMChoiceFactory,
-            exercise_factory.OrderSentenceFactory,
+            exercise_factory.ListenTermFactory,
+            exercise_factory.SpeakTermFactory,
+            exercise_factory.TermImageMChoiceTextFactory,
+            3,
         ),
         (
             exercise_factory.TermImageMChoiceFactory,
-            exercise_factory.TermDefinitionMChoiceFactory,
+            exercise_factory.TermConnectionFactory,
+            exercise_factory.SpeakSentenceFactory,
+            exercise_factory.ListenTermMChoiceFactory,
+            3,
         ),
         (
             exercise_factory.TermImageMChoiceTextFactory,
-            exercise_factory.TermImageMChoiceFactory,
+            exercise_factory.OrderSentenceFactory,
+            exercise_factory.ListenTermFactory,
+            exercise_factory.TermMChoiceFactory,
+            3,
         ),
         (
             exercise_factory.TermConnectionFactory,
+            exercise_factory.SpeakTermFactory,
+            exercise_factory.TermDefinitionMChoiceFactory,
+            exercise_factory.ListenSentenceFactory,
+            3,
+        ),
+        (
+            exercise_factory.OrderSentenceFactory,
+            exercise_factory.SpeakTermFactory,
+            1,
+        ),
+        (
+            exercise_factory.ListenTermFactory,
+            exercise_factory.TermDefinitionMChoiceFactory,
+            1,
+        ),
+        (
+            exercise_factory.ListenSentenceFactory,
+            exercise_factory.TermConnectionFactory,
+            1,
+        ),
+        (
+            exercise_factory.ListenTermMChoiceFactory,
+            exercise_factory.TermImageMChoiceFactory,
+            1,
+        ),
+        (
+            exercise_factory.SpeakTermFactory,
+            exercise_factory.ListenTermFactory,
+            1,
+        ),
+        (
+            exercise_factory.SpeakSentenceFactory,
+            exercise_factory.TermMChoiceFactory,
+            1,
+        ),
+        (
+            exercise_factory.TermMChoiceFactory,
+            exercise_factory.SpeakSentenceFactory,
+            1,
+        ),
+        (
+            exercise_factory.TermDefinitionMChoiceFactory,
+            exercise_factory.ListenTermFactory,
+            1,
+        ),
+        (
+            exercise_factory.TermImageMChoiceFactory,
+            exercise_factory.TermConnectionFactory,
+            1,
+        ),
+        (
             exercise_factory.TermImageMChoiceTextFactory,
+            exercise_factory.OrderSentenceFactory,
+            1,
+        ),
+        (
+            exercise_factory.TermConnectionFactory,
+            exercise_factory.SpeakTermFactory,
+            1,
         ),
     ],
 )
 def test_list_exercise_filter_exercise_type(client, token_header, factories):
-    exercise_factory, exercise_foo_factory = factories
-    exercises = exercise_factory.create_batch(
-        size=5,
-        language=Language.PORTUGUESE,
-    )
-    exercise_foo_factory.create_batch(
+    *exercise_factories, exercise_distractor_factory, count = factories
+    exercises = [
+        factory(language=Language.PORTUGUESE) for factory in exercise_factories
+    ]
+    exercise_distractor_factory.create_batch(
         size=5,
         language=Language.PORTUGUESE,
     )
@@ -115,13 +244,13 @@ def test_list_exercise_filter_exercise_type(client, token_header, factories):
     response = client.get(
         list_exercise_router(
             language=Language.PORTUGUESE,
-            exercise_type=exercises[0].type,
+            exercise_type=[exercise.type for exercise in exercises],
         ),
         headers=token_header,
     )
 
     assert response.status_code == 200
-    assert response.json()['count'] == 5
+    assert response.json()['count'] == count
     exercise_schema_view = [ExerciseView.from_orm(exercise) for exercise in exercises]
     for item in response.json()['items']:
         assert ExerciseView(**item) in exercise_schema_view
@@ -129,12 +258,19 @@ def test_list_exercise_filter_exercise_type(client, token_header, factories):
 
 @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
 @parametrize_exercies
-def test_list_exercise_filter_level(client, token_header, exercise_factory):
-    exercises1 = exercise_factory.create_batch(size=5, language=Language.PORTUGUESE)
+@pytest.mark.parametrize(
+    'level',
+    [
+        [Level.ADVANCED],
+        [Level.ADVANCED, Level.ELEMENTARY, Level.INTERMEDIATE],
+    ],
+)
+def test_list_exercise_filter_level(client, token_header, exercise_factory, level):
+    exercises1 = exercise_factory.create_batch(size=10, language=Language.PORTUGUESE)
     exercises2 = exercise_factory.create_batch(size=5, language=Language.PORTUGUESE)
     ExerciseLevel.objects.all().delete()
     [
-        ExerciseLevel.objects.get_or_create(exercise=exercise, level=Level.ADVANCED)
+        ExerciseLevel.objects.get_or_create(exercise=exercise, level=choice(level))
         for exercise in exercises1
     ]
     [
@@ -143,12 +279,12 @@ def test_list_exercise_filter_level(client, token_header, exercise_factory):
     ]
 
     response = client.get(
-        list_exercise_router(language=Language.PORTUGUESE, level=Level.ADVANCED),
+        list_exercise_router(language=Language.PORTUGUESE, level=level),
         headers=token_header,
     )
 
     assert response.status_code == 200
-    assert response.json()['count'] == 5
+    assert response.json()['count'] == 10
     exercise_schema_view = [ExerciseView.from_orm(exercise) for exercise in exercises1]
     for item in response.json()['items']:
         assert ExerciseView(**item) in exercise_schema_view
@@ -162,10 +298,13 @@ def test_list_exercise_filter_level(client, token_header, exercise_factory):
         exercise_factory.ListenTermMChoiceFactory,
         exercise_factory.SpeakTermFactory,
         exercise_factory.TermMChoiceFactory,
+        exercise_factory.TermImageMChoiceFactory,
+        exercise_factory.TermImageMChoiceTextFactory,
+        exercise_factory.TermConnectionFactory,
     ],
 )
 def test_list_exercise_filter_cardset(client, user, token_header, exercise_factory):
-    exercises = exercise_factory.create_batch(
+    exercises_card = exercise_factory.create_batch(
         size=5,
         language=Language.PORTUGUESE,
     )
@@ -175,9 +314,9 @@ def test_list_exercise_filter_cardset(client, user, token_header, exercise_facto
             cardset_id=cardset.id,
             term=exercise.term,
         )
-        for exercise in exercises
+        for exercise in exercises_card
     ]
-    exercise_factory.create_batch(size=5, language=Language.PORTUGUESE)
+    exercises = exercise_factory.create_batch(size=5, language=Language.PORTUGUESE)
 
     response = client.get(
         list_exercise_router(
@@ -188,10 +327,19 @@ def test_list_exercise_filter_cardset(client, user, token_header, exercise_facto
     )
 
     assert response.status_code == 200
-    assert response.json()['count'] == 5
-    exercise_schema_view = [ExerciseView.from_orm(exercise) for exercise in exercises]
-    for item in response.json()['items']:
-        assert ExerciseView(**item) in exercise_schema_view
+    assert response.json()['count'] == 10
+    assert all(
+        [
+            ExerciseView.from_orm(exercise)
+            in [ExerciseView(**resp) for resp in response.json()['items'][:5]]
+            for exercise in exercises_card
+        ]
+    )
+    exercise_schema_response = [
+        ExerciseView.from_orm(exercise) for exercise in exercises
+    ]
+    for item in response.json()['items'][5:]:
+        assert ExerciseView(**item) in exercise_schema_response
 
 
 @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
