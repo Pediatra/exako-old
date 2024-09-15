@@ -2,14 +2,16 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import functions
 from django.db.models.base import pre_save
-from ninja.errors import HttpError
+from django.dispatch import receiver
 
 from fluentia.apps.core.models import CustomManager
 from fluentia.apps.term import constants
+from fluentia.apps.term.validators import validate_term
 
 
 class TermBase(models.Model):
     additional_content = models.JSONField(blank=True, null=True)
+    objects = CustomManager()
 
     class Meta:
         abstract = True
@@ -83,28 +85,10 @@ class TermLexical(TermBase):
     value = models.CharField(max_length=255, blank=True, null=True)
     type = models.CharField(max_length=50, choices=constants.TermLexicalType.choices)
 
-    objects = CustomManager()
-
-
-def validate_term_value_ref(sender, instance, **kwargs):
-    if not instance.term_value_ref:
-        return
-
-    if instance.term_value_ref == instance.term:
-        raise HttpError(
-            status_code=422,
-            message='term_value_ref cannot be the same as term lexical reference.',
-        )
-
-
-pre_save.connect(validate_term_value_ref, TermLexical)
-
 
 class TermImage(TermBase):
     term = models.OneToOneField(Term, on_delete=models.CASCADE)
     image = models.ImageField(upload_to='term')
-
-    objects = CustomManager()
 
 
 class TermExample(TermBase):
@@ -122,8 +106,6 @@ class TermExampleTranslation(TermBase):
     language = models.CharField(max_length=50, choices=constants.Language.choices)
     translation = models.CharField(max_length=255)
     term_example = models.ForeignKey(TermExample, on_delete=models.CASCADE)
-
-    objects = CustomManager()
 
     class Meta:
         constraints = [
@@ -155,8 +137,6 @@ class TermDefinition(TermBase):
         blank=True,
     )
 
-    objects = CustomManager()
-
 
 class TermDefinitionTranslation(TermBase):
     language = models.CharField(
@@ -166,8 +146,6 @@ class TermDefinitionTranslation(TermBase):
     translation = models.CharField(max_length=255)
     meaning = models.TextField()
     term_definition = models.ForeignKey(TermDefinition, on_delete=models.CASCADE)
-
-    objects = CustomManager()
 
     class Meta:
         constraints = [
@@ -204,22 +182,6 @@ class TermPronunciation(TermBase):
         null=True,
     )
 
-    objects = CustomManager()
-
-
-def validate_pronunciation_lexical_form(sender, instance, **kwargs):
-    if not instance.term_lexical:
-        return
-
-    if instance.term_lexical.term_value_ref:
-        raise HttpError(
-            status_code=422,
-            message='lexical with term_value_ref cannot have a pronunciation.',
-        )
-
-
-pre_save.connect(validate_pronunciation_lexical_form, TermPronunciation)
-
 
 class TermExampleLink(TermBase):
     highlight = ArrayField(
@@ -249,7 +211,6 @@ class TermExampleLink(TermBase):
         null=True,
         blank=True,
     )
-    objects = CustomManager()
 
     class Meta:
         constraints = [
@@ -266,7 +227,7 @@ class TermExampleLink(TermBase):
 
 
 class TermExampleTranslationLink(TermBase):
-    translation_language = models.CharField(
+    language = models.CharField(
         max_length=50,
         choices=constants.Language.choices,
     )
@@ -297,29 +258,33 @@ class TermExampleTranslationLink(TermBase):
         null=True,
         blank=True,
     )
-    objects = CustomManager()
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 'term',
                 'term_example',
-                'translation_language',
+                'language',
                 name='unique_term_example_translation_link',
             ),
             models.UniqueConstraint(
                 'term_definition',
                 'term_example',
-                'translation_language',
+                'language',
                 name='unique_term_definition_translation_link',
             ),
             models.UniqueConstraint(
                 'term_lexical',
                 'term_example',
-                'translation_language',
+                'language',
                 name='unique_term_lexical_translation_link',
             ),
         ]
+
+
+@receiver(pre_save)
+def register_validators(sender, instance, **kwargs):
+    validate_term(sender.__name__, instance=instance)
 
 
 @models.CharField.register_lookup

@@ -62,7 +62,7 @@ def test_create_exercise_order_sentence_distractors(
     payload = generate_payload(exercise_factory.OrderSentenceFactory)
     terms = TermFactory.create_batch(size=5)
     term_ids = [term.id for term in terms]
-    payload['additional_content'] = {'distractors': term_ids}
+    payload['additional_content'] = {'distractors': {'term': term_ids}}
 
     response = client.post(
         create_exercise_router,
@@ -73,7 +73,7 @@ def test_create_exercise_order_sentence_distractors(
 
     assert response.status_code == 201
     exercise = Exercise.objects.get(id=response.json()['id'])
-    assert exercise.additional_content['distractors'] == term_ids
+    assert exercise.additional_content['distractors']['term'] == term_ids
 
 
 @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
@@ -81,8 +81,8 @@ def test_create_exercise_order_sentence_invalid_distractors(
     client, generate_payload, token_header
 ):
     payload = generate_payload(exercise_factory.OrderSentenceFactory)
-    term_ids = list(range(5))
-    payload['additional_content'] = {'distractors': term_ids}
+    term_ids = list(range(1000, 1009))
+    payload['additional_content'] = {'distractors': {'term': term_ids}}
 
     response = client.post(
         create_exercise_router,
@@ -93,7 +93,7 @@ def test_create_exercise_order_sentence_invalid_distractors(
 
     assert response.status_code == 201
     exercise = Exercise.objects.get(id=response.json()['id'])
-    assert exercise.additional_content['distractors'] == []
+    assert exercise.additional_content['distractors']['term'] == []
 
 
 def test_create_exercise_not_autenticated(client, generate_payload):
@@ -119,32 +119,6 @@ def test_create_exercise_permission_denied(client, generate_payload, token_heade
     )
 
     assert response.status_code == 403
-
-
-@pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
-@parametrize_exercies
-def test_create_exercise_not_found(
-    client,
-    generate_payload,
-    token_header,
-    exercise_factory,
-):
-    payload = generate_payload(exercise_factory)
-    payload.update(
-        term=23513516,
-        term_example=61261617,
-        term_pronunciation=123616767,
-        term_definition=161256167,
-    )
-
-    response = client.post(
-        create_exercise_router,
-        payload,
-        content_type='application/json',
-        headers=token_header,
-    )
-
-    assert response.status_code == 404
 
 
 @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)

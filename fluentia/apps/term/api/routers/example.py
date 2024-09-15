@@ -154,9 +154,8 @@ def create_example_translation(
     )
 
     TermExampleTranslationLink.objects.create(
-        translation_language=translation_schema.language,
         **translation_schema.model_dump(
-            exclude={'language', 'translation', 'additional_content'},
+            exclude={'translation', 'additional_content'},
             exclude_none=True,
         ),
     )

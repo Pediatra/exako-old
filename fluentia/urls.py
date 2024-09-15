@@ -22,6 +22,7 @@ from ninja import NinjaAPI
 
 from fluentia.apps.card.api.routers import card_router
 from fluentia.apps.term.api.routers.term import term_router
+from fluentia.apps.term.views import home_home
 from fluentia.apps.user.auth.api import auth_router
 from fluentia.apps.user.auth.exception import InvalidToken
 
@@ -35,6 +36,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls),
     path('', include('fluentia.apps.term.urls')),
+    path('auth/', include('fluentia.apps.user.urls')),
+    path('test/', home_home),
 ]
 
 
@@ -43,7 +46,7 @@ def invalid_token(request, exc):
     return api.create_response(
         request,
         {'detail': 'could not validate credentials.'},
-        status=400,
+        status=401,
     )
 
 

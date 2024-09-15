@@ -7,12 +7,7 @@ from jose import jwt
 from pytest import mark, raises
 
 from fluentia.apps.user.auth.exception import InvalidToken
-from fluentia.apps.user.auth.token import (
-    ALGORITHM,
-    TOKEN_EXPIRATION_DELTA,
-    AuthBearer,
-    create_jwt_access_token,
-)
+from fluentia.apps.user.auth.token import AuthBearer, create_jwt_access_token
 from fluentia.tests.factories.user import UserFactory
 
 pytestmark = mark.django_db
@@ -26,7 +21,7 @@ def test_create_jwt_token_access():
     decoded_token = jwt.decode(
         token,
         settings.SECRET_KEY,
-        algorithms=[ALGORITHM],
+        algorithms=[settings.JWT_ALGORITHM],
         options={'require_sub': True},
     )
 
@@ -63,9 +58,9 @@ def test_auth_bearer_token_authentication_with_invalid_user():
         'sub': 'fake@gmail.com',
         'name': 'test',
         'iat': datetime.utcnow(),
-        'exp': timezone.now() + TOKEN_EXPIRATION_DELTA,
+        'exp': timezone.now() + settings.TOKEN_EXPIRATION_DELTA,
     }
-    token = jwt.encode(data, settings.SECRET_KEY, algorithm=ALGORITHM)
+    token = jwt.encode(data, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
     with raises(InvalidToken):
         auth.authenticate(request, token)

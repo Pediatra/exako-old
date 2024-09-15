@@ -1,5 +1,15 @@
+from django.http import HttpResponse
 from django.shortcuts import render
+
+from fluentia.apps.user.auth.decorator import login_required
 
 
 def term_deck_home_view(request):
-    return render(request, 'exercise/exercise_base.html')
+    return render(request, 'abc.html')
+
+
+@login_required
+def home_home(request):
+    return HttpResponse(
+        'Text only, please.',
+    )

@@ -1,3 +1,5 @@
+from random import choice
+
 import factory
 from factory import fuzzy
 
@@ -34,7 +36,7 @@ class TermLexicalFactory(factory.django.DjangoModelFactory):
 
 
 class TermExampleFactory(factory.django.DjangoModelFactory):
-    language = fuzzy.FuzzyChoice(Language)
+    language = Language.PORTUGUESE
     example = factory.Faker('sentence', nb_words=8)
     level = fuzzy.FuzzyChoice(Level)
     additional_content = {'syllable': ['ca', 'sa'], 'part': 'en'}
@@ -44,7 +46,7 @@ class TermExampleFactory(factory.django.DjangoModelFactory):
 
 
 class TermExampleTranslationFactory(factory.django.DjangoModelFactory):
-    language = fuzzy.FuzzyChoice(Language)
+    language = Language.CHINESE
     translation = factory.Faker('sentence')
     term_example = factory.SubFactory(TermExampleFactory)
     additional_content = {'syllable': ['ca', 'sa'], 'part': 'en'}
@@ -66,11 +68,23 @@ class TermDefinitionFactory(factory.django.DjangoModelFactory):
 
 
 class TermDefinitionTranslationFactory(factory.django.DjangoModelFactory):
-    language = fuzzy.FuzzyChoice(Language)
     translation = factory.Faker('sentence')
     meaning = factory.Faker('sentence')
     term_definition = factory.SubFactory(TermDefinitionFactory)
     additional_content = {'syllable': ['ca', 'sa'], 'part': 'en'}
+
+    @classmethod
+    def _adjust_kwargs(cls, **kwargs):
+        term_definition = kwargs['term_definition']
+        if isinstance(term_definition, int):
+            term_definition = TermDefinition.objects.get(id=term_definition)
+        languages = [
+            choice
+            for choice, _ in Language.choices
+            if choice != term_definition.term.origin_language
+        ]
+        kwargs['language'] = choice(languages)
+        return kwargs
 
     class Meta:
         model = TermDefinitionTranslation

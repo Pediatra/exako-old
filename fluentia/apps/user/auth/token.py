@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta
+from typing import Any, Optional
 
 from django.conf import settings
+from django.http import HttpRequest
 from django.utils import timezone
 from jose import JWTError, jwt
 from ninja.security import HttpBearer
@@ -8,28 +9,33 @@ from ninja.security import HttpBearer
 from fluentia.apps.user.auth.exception import InvalidToken
 from fluentia.apps.user.models import User
 
-TOKEN_EXPIRATION_DELTA = timedelta(days=7)
-ALGORITHM = 'HS256'
 
-
-def create_jwt_access_token(user: User) -> str:
+def create_jwt_access_token(user) -> str:
     data = {
         'sub': user.email,
         'name': user.name,
-        'iat': datetime.utcnow(),
-        'exp': timezone.now() + TOKEN_EXPIRATION_DELTA,
+        'iat': timezone.now(),
+        'exp': timezone.now() + settings.TOKEN_EXPIRATION_DELTA,
     }
 
-    return jwt.encode(data, settings.SECRET_KEY, algorithm=ALGORITHM)
+    token = jwt.encode(data, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+    return token
 
 
 class AuthBearer(HttpBearer):
+    def __call__(self, request: HttpRequest) -> Optional[Any]:
+        token = super().__call__(request)
+        if token is None:
+            raise InvalidToken
+        return token
+
     def authenticate(self, request, token):
         try:
             payload = jwt.decode(
                 token,
                 settings.SECRET_KEY,
-                algorithms=[ALGORITHM],
+                algorithms=[settings.JWT_ALGORITHM],
                 options={'require_sub': True},
             )
             email: str = payload.get('sub')
@@ -41,4 +47,5 @@ class AuthBearer(HttpBearer):
             raise InvalidToken
 
         setattr(request, 'user', user)
+        setattr(request, 'is_authenticated', True)
         return token

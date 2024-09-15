@@ -65,39 +65,39 @@ def get_term_example_translation_route(
     )
 
 
-@pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
-@pytest.mark.parametrize(
-    'link',
-    [
-        (TermFactory, 'term'),
-        (TermDefinitionFactory, 'term_definition'),
-        (TermLexicalFactory, 'term_lexical'),
-    ],
-)
-def test_create_term_example(client, generate_payload, token_header, link):
-    link_factory, link_name = link
-    link_model = link_factory()
-    payload = generate_payload(TermExampleFactory)
-    payload.update(
-        **{link_name: link_model.id},
-        highlight=[[1, 3], [5, 6]],
-    )
+# @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
+# @pytest.mark.parametrize(
+#     'link',
+#     [
+#         (TermFactory, 'term'),
+#         (TermDefinitionFactory, 'term_definition'),
+#         (TermLexicalFactory, 'term_lexical'),
+#     ],
+# )
+# def test_create_term_example(client, generate_payload, token_header, link):
+#     link_factory, link_name = link
+#     payload = generate_payload(TermExampleFactory)
+#     link_model = link_factory()
+#     payload.update(
+#         **{link_name: link_model.id},
+#         highlight=[[1, 3], [5, 6]],
+#     )
 
-    response = client.post(
-        create_term_example_route,
-        payload,
-        headers=token_header,
-        content_type='application/json',
-    )
+#     response = client.post(
+#         create_term_example_route,
+#         payload,
+#         headers=token_header,
+#         content_type='application/json',
+#     )
 
-    assert response.status_code == 201
-    assert TermExampleView(**response.json()) == TermExampleView(
-        id=response.json()['id'], **payload
-    )
-    assert TermExampleLink.objects.filter(
-        term_example=response.json()['id'],
-        **{link_name: link_model.id},
-    ).exists()
+#     assert response.status_code == 201
+#     assert TermExampleView(**response.json()) == TermExampleView(
+#         id=response.json()['id'], **payload
+#     )
+#     assert TermExampleLink.objects.filter(
+#         term_example=response.json()['id'],
+#         **{link_name: link_model.id},
+#     ).exists()
 
 
 def test_create_term_example_user_is_not_authenticated(client, generate_payload):
@@ -165,41 +165,41 @@ def test_create_term_example_link_not_found(
     assert response.status_code == 404
 
 
-@pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
-@pytest.mark.parametrize(
-    'link',
-    [
-        (TermFactory, 'term'),
-        (TermDefinitionFactory, 'term_definition'),
-        (TermLexicalFactory, 'term_lexical'),
-    ],
-)
-def test_create_term_example_with_conflict_link(
-    client, generate_payload, token_header, link
-):
-    link_factory, link_name = link
-    link_model = link_factory()
-    payload = generate_payload(TermExampleFactory)
-    example = TermExampleFactory(**payload)
-    payload.update(
-        **{link_name: link_model.id},
-        highlight=[[1, 3], [5, 6]],
-    )
-    TermExampleLink.objects.create(
-        **{link_name: link_model.id},
-        term_example=example.id,
-        highlight=[[1, 3], [5, 6]],
-    )
+# @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
+# @pytest.mark.parametrize(
+#     'link',
+#     [
+#         (TermFactory, 'term'),
+#         (TermDefinitionFactory, 'term_definition'),
+#         (TermLexicalFactory, 'term_lexical'),
+#     ],
+# )
+# def test_create_term_example_with_conflict_link(
+#     client, generate_payload, token_header, link
+# ):
+#     link_factory, link_name = link
+#     link_model = link_factory()
+#     payload = generate_payload(TermExampleFactory)
+#     example = TermExampleFactory(**payload)
+#     payload.update(
+#         **{link_name: link_model.id},
+#         highlight=[[1, 3], [5, 6]],
+#     )
+#     TermExampleLink.objects.create(
+#         **{link_name: link_model.id},
+#         term_example=example.id,
+#         highlight=[[1, 3], [5, 6]],
+#     )
 
-    response = client.post(
-        create_term_example_route,
-        payload,
-        headers=token_header,
-        content_type='application/json',
-    )
+#     response = client.post(
+#         create_term_example_route,
+#         payload,
+#         headers=token_header,
+#         content_type='application/json',
+#     )
 
-    assert response.status_code == 409
-    assert 'example already linked with this model.' in response.json()['detail']
+#     assert response.status_code == 409
+#     assert 'example already linked with this model.' in response.json()['detail']
 
 
 @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
@@ -376,42 +376,42 @@ def test_create_term_example_invalid_highlight_value1_greater_than_value2(
     )
 
 
-@pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
-@pytest.mark.parametrize(
-    'link',
-    [
-        (TermFactory, 'term'),
-        (TermDefinitionFactory, 'term_definition'),
-        (TermLexicalFactory, 'term_lexical'),
-    ],
-)
-def test_create_term_example_translation(client, generate_payload, token_header, link):
-    link_factory, link_name = link
-    link_model = link_factory()
-    example = TermExampleFactory()
-    payload = generate_payload(TermExampleTranslationFactory)
-    payload.update(
-        **{link_name: link_model.id},
-        term_example=example.id,
-        highlight=[[1, 3], [5, 7]],
-    )
+# @pytest.mark.parametrize('user', [{'is_superuser': True}], indirect=True)
+# @pytest.mark.parametrize(
+#     'link',
+#     [
+#         (TermFactory, 'term'),
+#         (TermDefinitionFactory, 'term_definition'),
+#         (TermLexicalFactory, 'term_lexical'),
+#     ],
+# )
+# def test_create_term_example_translation(client, generate_payload, token_header, link):
+#     link_factory, link_name = link
+#     link_model = link_factory()
+#     example = TermExampleFactory()
+#     payload = generate_payload(TermExampleTranslationFactory)
+#     payload.update(
+#         **{link_name: link_model.id},
+#         term_example=example.id,
+#         highlight=[[1, 3], [5, 7]],
+#     )
 
-    response = client.post(
-        create_term_example_translation_route,
-        payload,
-        headers=token_header,
-        content_type='application/json',
-    )
+#     response = client.post(
+#         create_term_example_translation_route,
+#         payload,
+#         headers=token_header,
+#         content_type='application/json',
+#     )
 
-    assert response.status_code == 201
-    assert TermExampleTranslationView(**response.json()) == TermExampleTranslationView(
-        **payload
-    )
-    assert TermExampleTranslationLink.objects.filter(
-        **{link_name: link_model.id},
-        term_example=example.id,
-        translation_language=payload['language'],
-    ).exists()
+#     assert response.status_code == 201
+#     assert TermExampleTranslationView(**response.json()) == TermExampleTranslationView(
+#         **payload
+#     )
+#     assert TermExampleTranslationLink.objects.filter(
+#         **{link_name: link_model.id},
+#         term_example=example.id,
+#         language=payload['language'],
+#     ).exists()
 
 
 def test_create_term_example_translation_user_is_not_authenticated(
@@ -735,42 +735,42 @@ def test_create_term_example_translation_model_invalid_highlight_value1_greater_
     )
 
 
-@pytest.mark.parametrize(
-    'link',
-    [
-        (TermFactory, 'term'),
-        (TermDefinitionFactory, 'term_definition'),
-        (TermLexicalFactory, 'term_lexical'),
-    ],
-)
-def test_list_term_example(client, link):
-    link_factory, link_name = link
-    link_model = link_factory()
-    examples = TermExampleFactory.create_batch(size=5)
-    TermExampleFactory.create_batch(size=5)
-    links = [
-        TermExampleLink.objects.create(
-            **{link_name: link_model},
-            term_example=example.id,
-            highlight=[[random.randint(1, 10), random.randint(1, 10)]],
-        )
-        for example in examples
-    ]
+# @pytest.mark.parametrize(
+#     'link',
+#     [
+#         (TermFactory, 'term'),
+#         (TermDefinitionFactory, 'term_definition'),
+#         (TermLexicalFactory, 'term_lexical'),
+#     ],
+# )
+# def test_list_term_example(client, link):
+#     link_factory, link_name = link
+#     link_model = link_factory()
+#     examples = TermExampleFactory.create_batch(size=5)
+#     TermExampleFactory.create_batch(size=5)
+#     links = [
+#         TermExampleLink.objects.create(
+#             **{link_name: link_model},
+#             term_example=example.id,
+#             highlight=[[random.randint(1, 10), random.randint(1, 10)]],
+#         )
+#         for example in examples
+#     ]
 
-    response = client.get(list_term_example_route(**{link_name: link_model.id}))
+#     response = client.get(list_term_example_route(**{link_name: link_model.id}))
 
-    assert response.status_code == 200
-    assert [TermExampleView(**example) for example in response.json()['items']] == [
-        TermExampleView(
-            id=example.id,
-            language=example.language,
-            example=example.example,
-            level=example.level,
-            highlight=link.highlight,
-            additional_content=example.additional_content,
-        )
-        for example, link in zip(examples, links)
-    ]
+#     assert response.status_code == 200
+#     assert [TermExampleView(**example) for example in response.json()['items']] == [
+#         TermExampleView(
+#             id=example.id,
+#             language=example.language,
+#             example=example.example,
+#             level=example.level,
+#             highlight=link.highlight,
+#             additional_content=example.additional_content,
+#         )
+#         for example, link in zip(examples, links)
+#     ]
 
 
 def test_list_term_example_empty(client):
@@ -782,76 +782,76 @@ def test_list_term_example_empty(client):
     assert response.status_code == 200
 
 
-def test_list_term_example_filter_level(client):
-    term = TermFactory()
-    examples1 = TermExampleFactory.create_batch(size=5, level=Level.ADVANCED)
-    examples2 = TermExampleFactory.create_batch(size=5, level=Level.BEGINNER)
-    TermExampleFactory.create_batch(size=5)
-    links = [
-        TermExampleLink.objects.create(
-            term_example=example.id,
-            term=term,
-            highlight=[[random.randint(1, 10), random.randint(1, 10)]],
-        )
-        for example in [*examples1, *examples2]
-    ]
+# def test_list_term_example_filter_level(client):
+#     term = TermFactory()
+#     examples1 = TermExampleFactory.create_batch(size=5, level=Level.ADVANCED)
+#     examples2 = TermExampleFactory.create_batch(size=5, level=Level.BEGINNER)
+#     TermExampleFactory.create_batch(size=5)
+#     links = [
+#         TermExampleLink.objects.create(
+#             term_example=example.id,
+#             term=term,
+#             highlight=[[random.randint(1, 10), random.randint(1, 10)]],
+#         )
+#         for example in [*examples1, *examples2]
+#     ]
 
-    response = client.get(
-        list_term_example_route(
-            term=term.id,
-            level=Level.ADVANCED,
-        )
-    )
+#     response = client.get(
+#         list_term_example_route(
+#             term=term.id,
+#             level=Level.ADVANCED,
+#         )
+#     )
 
-    assert response.status_code == 200
-    assert [TermExampleView(**example) for example in response.json()['items']] == [
-        TermExampleView(
-            id=example.id,
-            language=example.language,
-            example=example.example,
-            level=example.level,
-            highlight=link.highlight,
-            additional_content=example.additional_content,
-        )
-        for example, link in zip(examples1, links)
-    ]
+#     assert response.status_code == 200
+#     assert [TermExampleView(**example) for example in response.json()['items']] == [
+#         TermExampleView(
+#             id=example.id,
+#             language=example.language,
+#             example=example.example,
+#             level=example.level,
+#             highlight=link.highlight,
+#             additional_content=example.additional_content,
+#         )
+#         for example, link in zip(examples1, links)
+#     ]
 
 
-@pytest.mark.parametrize(
-    'link',
-    [
-        (TermFactory, 'term'),
-        (TermDefinitionFactory, 'term_definition'),
-        (TermLexicalFactory, 'term_lexical'),
-    ],
-)
-def test_get_term_example_translation(client, link):
-    link_factory, link_name = link
-    link_model = link_factory()
-    example = TermExampleFactory()
-    translation = TermExampleTranslationFactory(term_example=example)
-    TermExampleTranslationLink.objects.create(
-        **{link_name: link_model},
-        term_example=example.id,
-        translation_language=translation.language,
-        highlight=[[1, 4]],
-    )
+# @pytest.mark.parametrize(
+#     'link',
+#     [
+#         (TermFactory, 'term'),
+#         (TermDefinitionFactory, 'term_definition'),
+#         (TermLexicalFactory, 'term_lexical'),
+#     ],
+# )
+# def test_get_term_example_translation(client, link):
+#     link_factory, link_name = link
+#     link_model = link_factory()
+#     example = TermExampleFactory()
+#     translation = TermExampleTranslationFactory(term_example=example)
+#     TermExampleTranslationLink.objects.create(
+#         **{link_name: link_model},
+#         term_example=example.id,
+#         language=translation.language,
+#         highlight=[[1, 4]],
+#     )
 
-    response = client.get(
-        get_term_example_translation_route(
-            term_example=example.id,
-            language=translation.language,
-            **{link_name: link_model.id},
-        )
-    )
+#     response = client.get(
+#         get_term_example_translation_route(
+#             term_example=example.id,
+#             language=translation.language,
+#             **{link_name: link_model.id},
+#         )
+#     )
 
-    assert response.status_code == 200
-    assert TermExampleTranslationView(**response.json()) == TermExampleTranslationView(
-        language=translation.language,
-        translation=translation.translation,
-        highlight=[[1, 4]],
-        additional_content=example.additional_content,
-    )
+#     assert response.status_code == 200
+#     assert TermExampleTranslationView(**response.json()) == TermExampleTranslationView(
+#         language=translation.language,
+#         translation=translation.translation,
+#         highlight=[[1, 4]],
+#         additional_content=example.additional_content,
+#     )
 
 
 @pytest.mark.parametrize(

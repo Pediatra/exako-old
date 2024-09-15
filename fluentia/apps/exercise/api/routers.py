@@ -1,30 +1,17 @@
-from random import randint, random, sample, shuffle
-from string import punctuation
+from random import random
 
-from django.db import IntegrityError, models
-from django.db.models import OuterRef, Subquery
-from django.db.models.functions import Random
-from django.shortcuts import get_object_or_404
-from ninja import File, Query, Router, UploadedFile
+from django.db import IntegrityError
+from ninja import Field, Query, Router
 from ninja.errors import HttpError
 from ninja.pagination import PageNumberPagination, paginate
 
-from fluentia.apps.card.models import Card
 from fluentia.apps.core import schema as core_schema
 from fluentia.apps.core.permissions import is_admin, permission_required
-from fluentia.apps.exercise import constants
+from fluentia.apps.exercise import exercises
 from fluentia.apps.exercise.api import schema
-from fluentia.apps.exercise.constants import ExerciseType
-from fluentia.apps.exercise.models import Exercise, ExerciseLevel, RandomSeed
-from fluentia.apps.term.constants import Language, Level, TermLexicalType
-from fluentia.apps.term.models import (
-    Term,
-    TermDefinition,
-    TermExampleLink,
-    TermImage,
-    TermLexical,
-    TermPronunciation,
-)
+from fluentia.apps.exercise.constants import ExerciseSubType, ExerciseType
+from fluentia.apps.exercise.models import Exercise
+from fluentia.apps.term.constants import Language, Level
 from fluentia.apps.user.auth.token import AuthBearer
 
 exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
@@ -50,13 +37,144 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                     }
                 },
             },
-        }
+        },
+        'requestBody': {
+            'content': {
+                'application/json': {
+                    'examples': {
+                        'exercise1': {
+                            'summary': 'OrderSentenceSchema',
+                            'value': schema.OrderSentenceSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.ORDER_SENTENCE,
+                                term_example=1,
+                                additional_content={
+                                    'distractors': {'term': [1, 2, 3, 4]}
+                                },
+                            ),
+                        },
+                        'exercise2': {
+                            'summary': 'ListenTermSchema',
+                            'value': schema.ListenTermSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.LISTEN_TERM,
+                                term_pronunciation=1,
+                                term=1,
+                                additional_content={'sub_type': ExerciseSubType.TERM},
+                            ),
+                        },
+                        'exercises3': {
+                            'summary': 'ListenSentenceSchema',
+                            'value': schema.ListenSentenceSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.LISTEN_SENTENCE,
+                                term_pronunciation=1,
+                                term_example=1,
+                            ),
+                        },
+                        'exercises4': {
+                            'summary': 'ListenTermMChoiceSchema',
+                            'value': schema.ListenTermMChoiceSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.LISTEN_TERM_MCHOICE,
+                                term_pronunciation=1,
+                                term=1,
+                            ),
+                        },
+                        'exercises5': {
+                            'summary': 'SpeakTermSchema',
+                            'value': schema.SpeakTermSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.SPEAK_TERM,
+                                term_pronunciation=1,
+                                term=1,
+                                additional_content={'sub_type': ExerciseSubType.TERM},
+                            ),
+                        },
+                        'exercises6': {
+                            'summary': 'SpeakSentenceSchema',
+                            'value': schema.SpeakSentenceSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.SPEAK_SENTENCE,
+                                term_pronunciation=1,
+                                term_example=1,
+                            ),
+                        },
+                        'exercises7': {
+                            'summary': 'TermMChoiceSchema',
+                            'value': schema.TermMChoiceSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.TERM_MCHOICE,
+                                term=1,
+                                term_example=1,
+                                additional_content={
+                                    'distractors': {
+                                        'term': [1, 3, 5, 7],
+                                        'term_lexical': [1, 5, 6, 8],
+                                    },
+                                    'sub_type': ExerciseSubType.TERM,
+                                },
+                            ),
+                        },
+                        'exercises8': {
+                            'summary': 'TermDefinitionMChoiceSchema',
+                            'value': schema.TermDefinitionMChoiceSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.TERM_DEFINITION_MCHOICE,
+                                term=1,
+                                term_definition=1,
+                                additional_content={
+                                    'distractors': {'term_definition': [1, 3, 5, 7]}
+                                },
+                            ),
+                        },
+                        'exercises9': {
+                            'summary': 'TermImageMChoiceSchema',
+                            'value': schema.TermImageMChoiceSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.TERM_IMAGE_MCHOICE,
+                                term=1,
+                                term_image=1,
+                                term_pronunciation=1,
+                                additional_content={
+                                    'distractors': {'term_image': [1, 3, 5, 7]}
+                                },
+                            ),
+                        },
+                        'exercises10': {
+                            'summary': 'TermImageMChoiceTextSchema',
+                            'value': schema.TermImageMChoiceTextSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.TERM_IMAGE_MCHOICE_TEXT,
+                                term=1,
+                                term_image=1,
+                                additional_content={
+                                    'distractors': {'term': [1, 3, 5, 7]}
+                                },
+                            ),
+                        },
+                        'exercises11': {
+                            'summary': 'TermConnectionSchema',
+                            'value': schema.TermConnectionSchema(
+                                language=Language.PORTUGUESE,
+                                type=ExerciseType.TERM_CONNECTION,
+                                term=1,
+                                additional_content={
+                                    'distractors': {'term': [1, 3, 5, 7, 8, 9, 11, 12]},
+                                    'connections': {'term': [1, 5, 7, 9]},
+                                },
+                            ),
+                        },
+                    },
+                }
+            }
+        },
     },
 )
 @permission_required([is_admin])
-def create_exercise(request, exercise_schema: schema.ExerciseSchema):
+def create_exercise(request, ExerciseSchema: schema.ExerciseSchema):
     try:
-        return 201, Exercise.objects.create(**exercise_schema.model_dump())
+        return 201, Exercise.objects.create(**ExerciseSchema.model_dump())
     except IntegrityError:
         raise HttpError(status_code=409, message='exercise already exists.')
 
@@ -80,634 +198,87 @@ def list_exercise(
     ),
     seed: float | None = Query(default_factory=random, le=1, ge=0),
 ):
-    queryset = Exercise.objects.filter(language__in=language).annotate(
-        md5_seed=RandomSeed(
-            models.F('id'),
-            seed=seed,
-            output_field=models.CharField(),
-        )
+    return Exercise.objects.list(
+        language=language,
+        exercise_type=exercise_type,
+        level=level,
+        cardset_id=cardset_id,
+        seed=seed,
+        user=request.user,
     )
 
-    if (
-        exercise_type
-        and isinstance(exercise_type, list)
-        and ExerciseType.RANDOM not in exercise_type
-        or exercise_type != ExerciseType.RANDOM
-    ):
-        queryset = queryset.filter(type__in=exercise_type)
 
-    if level:
-        level_query = ExerciseLevel.objects.filter(level__in=level).values(
-            'exercise_id'
-        )
-        queryset = queryset.filter(id__in=level_query)
-
-    if cardset_id:
-        cardset_query = Card.objects.filter(
-            cardset__user=request.user, cardset_id__in=cardset_id
-        ).values('term')
-        cardset_queryset = Exercise.objects.filter(
-            models.Q(term__in=cardset_query),
-        ).annotate(md5_seed=models.Value('0'))
-        queryset = queryset.exclude(
-            id__in=cardset_queryset.values_list('id', flat=True)
-        )
-        queryset = queryset.union(cardset_queryset)
-
-    return queryset.values('type', 'id').order_by('md5_seed')
-
-
-@exercise_router.get(
+exercises.OrderSentenceExercise.as_endpoint(
+    router=exercise_router,
     path='/order-sentence/{exercise_id}',
-    response={
-        200: schema.OrderSentenceView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício sobre reodernar frases.',
-    description="""
-    Endpoint que retorna uma frase embaralhada relacionada a um termo e o usuário terá que reordenar a frase na ordem correta.
-    """,
+    ExerciseSchema=schema.OrderSentenceView,
+    sentence=str,
 )
-def order_sentence_exercise(request, exercise_id: int):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.ORDER_SENTENCE,
-    )
-    sentence = exercise.term_example.example
-    sentence = sentence.translate(str.maketrans('', '', punctuation))
-    sentence_parts = sentence.split()
 
-    distractors = exercise.additional_content.get('distractors', [])
-    number_of_distractors = randint(1, len(distractors))
-    distractors_parts = Term.objects.filter(id__in=distractors).values_list(
-        'expression', flat=True
-    )[:number_of_distractors]
-    sentence_parts += list(distractors_parts)
-
-    shuffle(sentence_parts)
-    return schema.OrderSentenceView(
-        header=constants.ORDER_SENTENCE_HEADER,
-        sentence=sentence_parts,
-    )
-
-
-@exercise_router.post(
-    path='/order-sentence/{exercise_id}',
-    response=schema.ExerciseResponse,
-)
-def check_order_sentence_exercise(
-    request,
-    exercise_id: int,
-    exercise_schema: schema.TextCheck,
-):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.ORDER_SENTENCE,
-    )
-
-    sentence = exercise.term_example.example
-    sentence = sentence.translate(str.maketrans('', '', punctuation))
-    check_sentence = exercise_schema.text.translate(str.maketrans('', '', punctuation))
-    correct = sentence == check_sentence
-    return schema.ExerciseResponse(correct=correct, correct_answer=sentence)
-
-
-@exercise_router.get(
+exercises.ListenTermExercise.as_endpoint(
+    router=exercise_router,
     path='/listen-term/{exercise_id}',
-    response={
-        200: schema.ListenView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício sobre escuta de pronúncia de termos.',
-    description='Endpoint que retorna a pronúncia em forma de aúdio de um texto para o usuário responder qual o termo correspondente.',
+    ExerciseSchema=schema.ListenView,
+    expression=str,
 )
-def listen_term_exercise(request, exercise_id: int):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.LISTEN_TERM,
-    )
 
-    audio_file = exercise.term_pronunciation.audio_file
-    return schema.ListenView(
-        header=constants.LISTEN_TERM_HEADER,
-        audio_file=audio_file,
-    )
-
-
-@exercise_router.post(
-    path='/listen-term/{exercise_id}',
-    response=schema.ExerciseResponse,
-)
-def check_listen_term_exercise(
-    request,
-    exercise_id: int,
-    exercise_schema: schema.TextCheck,
-):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.LISTEN_TERM,
-    )
-    if exercise.term_lexical_id:
-        text_values = (
-            TermLexical.objects.filter(id=exercise.term_lexical_id)
-            .values('value', 'term_value_ref__expression')
-            .first()
-        )
-        text = text_values.get('value') or text_values.get('term_value_ref__expression')
-    else:
-        text = exercise.term.expression
-    correct = text.lower() == exercise_schema.text.lower()
-    return schema.ExerciseResponse(correct=correct, correct_answert=text)
-
-
-@exercise_router.get(
+exercises.ListenTermMChoiceExercise.as_endpoint(
+    router=exercise_router,
     path='/listen-term-mchoice/{exercise_id}',
-    response={
-        200: schema.ListenMChoiceView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício sobre escuta de pronúncia de termos.',
-    description='Endpoint que retorna a pronúncia de um termo em forma de aúdio de um texto para o usuário responder qual o termo correspondente a partir das alternativas disponíveis com palavras similares.',
+    ExerciseSchema=schema.ListenMChoiceView,
+    term_id=int,
 )
-def listen_term_mchoice_exercise(request, exercise_id: int):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.LISTEN_TERM_MCHOICE,
-    )
 
-    choices = (
-        TermLexical.objects.filter(
-            term_id=exercise.term_id,
-            type=TermLexicalType.RHYME,
-            term_value_ref__isnull=False,
-        )
-        .select_related('term_value_ref')
-        .annotate(random_order=Random())
-        .annotate(
-            audio_file=Subquery(
-                TermPronunciation.objects.filter(
-                    term_id=OuterRef('term_value_ref_id')
-                ).values('audio_file')
-            )
-        )
-        .order_by('random_order')[:3]
-        .values_list(
-            'term_value_ref__expression',
-            'audio_file',
-        )
-    )
-    choices = {expression: audio_file for expression, audio_file in choices}
-
-    expression = exercise.term.expression
-    audio_file = exercise.term_pronunciation.audio_file
-    choices[expression] = audio_file
-
-    choices = list(choices.items())
-    shuffle(choices)
-    choices = dict(choices)
-    return schema.ListenMChoiceView(
-        header=constants.LISTEN_MCHOICE_HEADER,
-        choices=choices,
-    )
-
-
-@exercise_router.post(
-    path='/listen-term-mchoice/{exercise_id}',
-    response=schema.ExerciseResponse,
-)
-def check_listen_term_mchoice_exercise(
-    request,
-    exercise_id: int,
-    exercise_schema: schema.TextCheck,
-):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.LISTEN_TERM_MCHOICE,
-    )
-
-    text = exercise.term.expression
-    correct = text.lower() == exercise_schema.text.lower()
-    return schema.ExerciseResponse(correct=correct, correct_answer=text)
-
-
-@exercise_router.get(
+exercises.ListenSentenceExercise.as_endpoint(
+    router=exercise_router,
     path='/listen-sentence/{exercise_id}',
-    response={
-        200: schema.ListenView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício sobre escuta de pronúncia de frase.',
-    description='Endpoint que retorna a pronúncia em forma de aúdio de uma frase relacionada ao termo para o usuário escrever a frase corretamente.',
+    ExerciseSchema=schema.ListenView,
+    sentence=str,
 )
-def listen_sentence_exercise(request, exercise_id: int):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.LISTEN_SENTENCE,
-    )
 
-    audio_file = exercise.term_pronunciation.audio_file
-    return schema.ListenView(
-        header=constants.LISTEN_SENTENCE_HEADER,
-        audio_file=audio_file,
-    )
-
-
-@exercise_router.post(
-    path='/listen-sentence/{exercise_id}',
-    response=schema.ExerciseResponse,
-)
-def check_listen_sentence_exercise(
-    request,
-    exercise_id: int,
-    exercise_schema: schema.TextCheck,
-):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.LISTEN_SENTENCE,
-    )
-
-    text = exercise.term_example.example
-    correct = text.lower() == exercise_schema.text.lower()
-    return schema.ExerciseResponse(correct=correct, correct_answert=text)
-
-
-@exercise_router.get(
+exercises.SpeakTermExercise.as_endpoint(
+    router=exercise_router,
     path='/speak-term/{exercise_id}',
-    response={
-        200: schema.SpeakView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício sobre pronúnciação de termos.',
-    description='Endpoint que retorna um link para enviar a pronúncia em forma de aúdio de um usuário sobre um termo.',
+    ExerciseSchema=schema.SpeakView,
 )
-def speak_term_exercise(request, exercise_id: int):
-    pass
 
-
-@exercise_router.post(
-    path='/speak-term/{exercise_id}',
-    response=schema.ExerciseResponse,
-)
-def check_speak_term_exercise(
-    request, exercise_id: int, audio: UploadedFile = File(...)
-):
-    pass
-
-
-@exercise_router.get(
+exercises.SpeakSentenceExercise.as_endpoint(
+    router=exercise_router,
     path='/speak-sentence/{exercise_id}',
-    response={
-        200: schema.SpeakView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício sobre pronúnciação de termos.',
-    description='Endpoint que retorna um link para enviar a pronúncia em forma de aúdio de um usuário sobre um termo.',
+    ExerciseSchema=schema.SpeakView,
 )
-def speak_sentence_exercise(request, exercise_id: int):
-    pass
 
-
-@exercise_router.post(
-    path='/speak-sentence/{exercise_id}',
-    response=schema.ExerciseResponse,
+exercises.TermMChoiceExercise.as_endpoint(
+    router=exercise_router,
+    path='/term-mchoice/{exercise_id}',
+    ExerciseSchema=schema.TermMChoiceView,
+    term_id=int,
 )
-def check_speak_sentence_exercise(request, exercise_id: int):
-    pass
 
-
-@exercise_router.get(
-    path='/mchoice-term/{exercise_id}',
-    response={
-        200: schema.MultipleChoiceView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício de multipla escolha sobre termos.',
-    description='Endpoint que retorará uma frase com um termo atrelado faltando, no qual será necessário escolher entre as opções qual completa o espaço na frase.',
+exercises.TermDefinitionMChoiceExercise.as_endpoint(
+    router=exercise_router,
+    path='/definition-mchoice/{exercise_id}',
+    ExerciseSchema=schema.TermMChoiceView,
+    term_definition_id=int,
 )
-def term_mchoice_exercise(request, exercise_id: int):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.TERM_MCHOICE,
-    )
 
-    if exercise.term_lexical_id:
-        text_values = (
-            TermLexical.objects.filter(id=exercise.term_lexical_id)
-            .values('value', 'term_value_ref__expression')
-            .first()
-        )
-        text = text_values.get('value') or text_values.get('term_value_ref__expression')
-        highlight = TermExampleLink.objects.filter(
-            term_example_id=exercise.term_example_id,
-            term_lexical_id=exercise.term_lexical_id,
-        ).values_list('highlight', flat=True)[0]
-    else:
-        text = exercise.term.expression
-        highlight = TermExampleLink.objects.filter(
-            term_example_id=exercise.term_example_id,
-            term_id=exercise.term_id,
-        ).values_list('highlight', flat=True)[0]
-
-    choices = list()
-    choices.append(text)
-
-    distractors = exercise.additional_content.get('distractors')
-    term_ids = list(sample(distractors, 3))
-    choices += list(
-        Term.objects.filter(id__in=term_ids).values_list('expression', flat=True)
-    )
-
-    sentence = exercise.term_example.example
-    sentence = list(sentence)
-
-    for start, end in list(highlight):
-        for i in range(start, end + 1):
-            sentence[i] = '_'
-
-    sentence = ''.join(sentence)
-
-    shuffle(choices)
-    return schema.MultipleChoiceView(
-        header=constants.TERM_MCHOICE_HEADER.format(sentence=sentence),
-        choices=choices,
-    )
-
-
-@exercise_router.post(
-    path='/mchoice-term/{exercise_id}',
-    response=schema.ExerciseResponse,
-)
-def check_term_mchoice_exercise(
-    request,
-    exercise_id: int,
-    exercise_schema: schema.TextCheck,
-):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.TERM_MCHOICE,
-    )
-    if exercise.term_lexical_id:
-        text_values = (
-            TermLexical.objects.filter(id=exercise.term_lexical_id)
-            .values('value', 'term_value_ref__expression')
-            .first()
-        )
-        text = text_values.get('value') or text_values.get('term_value_ref__expression')
-    else:
-        text = exercise.term.expression
-    correct = text.lower() == exercise_schema.text.lower()
-    return schema.ExerciseResponse(correct=correct, correct_answer=text)
-
-
-@exercise_router.get(
-    path='/mchoice-definition/{exercise_id}',
-    response={
-        200: schema.MultipleChoiceView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício de multipla escolha sobre definições de termos.',
-    description='O usuário receberá um termo, no qual será necessário escolher entre as opções qual pertence ao termo.',
-)
-def term_definition_mchoice_exercise(request, exercise_id: int):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.TERM_DEFINITION_MCHOICE,
-    )
-
-    definition = exercise.term_definition.definition
-    choices = list()
-    choices.append(definition)
-
-    distractors = exercise.additional_content.get('distractors')
-    definition_ids = list(sample(distractors, 3))
-    choices += list(
-        TermDefinition.objects.filter(id__in=definition_ids).values_list(
-            'definition', flat=True
-        )
-    )
-
-    return schema.MultipleChoiceView(
-        header=constants.TERM_DEFINITION_MCHOICE_HEADER.format(
-            term=exercise.term.expression
-        ),
-        choices=choices,
-    )
-
-
-@exercise_router.post(
-    path='/mchoice-definition/{exercise_id}',
-    response=schema.ExerciseResponse,
-)
-def check_term_definition_mchoice_exercise(
-    request,
-    exercise_id: int,
-    exercise_schema: schema.TextCheck,
-):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.TERM_DEFINITION_MCHOICE,
-    )
-
-    text = exercise.term_definition.definition
-    correct = text.lower() == exercise_schema.text.lower()
-    return schema.ExerciseResponse(correct=correct, correct_answer=text)
-
-
-@exercise_router.get(
+exercises.TermImageMChoiceExercise.as_endpoint(
+    router=exercise_router,
     path='/term-image-mchoice/{exercise_id}',
-    response={
-        200: schema.ImageMChoiceView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício de multipla escolha sobre imagem de termos.',
-    description='O usuário receberá um audio sobre o termo, no qual será necessário escolher entre as opções a imagem a qual pertence ao termo.',
+    ExerciseSchema=schema.ImageMChoiceView,
+    term_id=int,
 )
-def term_image_mchoice_exercise(request, exercise_id: int):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.TERM_IMAGE_MCHOICE,
-    )
 
-    distractors = exercise.additional_content.get('distractors')
-    term_ids = list(sample(distractors, 3))
-    term_ids.append(exercise.term_id)
-
-    choices = dict(
-        TermImage.objects.filter(term_id__in=term_ids).values_list('term_id', 'image')
-    )
-    audio_file = exercise.term_pronunciation.audio_file
-
-    choices = list(choices.items())
-    shuffle(choices)
-    choices = dict(choices)
-    return schema.ImageMChoiceView(
-        header=constants.TERM_IMAGE_MCHOICE_HEADER,
-        audio_file=audio_file,
-        choices=choices,
-    )
-
-
-@exercise_router.post(
-    path='/term-image-mchoice/{exercise_id}',
-    response=schema.ExerciseResponse,
-)
-def check_term_image_mchoice_exercise(
-    request,
-    exercise_id: int,
-    term_id: int,
-):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.TERM_IMAGE_MCHOICE,
-    )
-
-    correct = exercise.term_id == term_id
-    return schema.ExerciseResponse(
-        correct=correct,
-        correct_answer=str(exercise.term_id),
-    )
-
-
-@exercise_router.get(
+exercises.TermImageMChoiceTextExercise.as_endpoint(
+    router=exercise_router,
     path='/term-image-text-mchoice/{exercise_id}',
-    response={
-        200: schema.TextImageMChoiceView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício de multipla escolha sobre imagem de termos.',
-    description='O usuário receberá um audio sobre o termo, no qual será necessário escolher entre as opções a imagem a qual pertence ao termo.',
+    ExerciseSchema=schema.TextImageMChoiceView,
+    term_id=int,
 )
-def term_image_text_mchoice_exercise(request, exercise_id: int):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.TERM_IMAGE_TEXT_MCHOICE,
-    )
 
-    distractors = exercise.additional_content.get('distractors')
-    term_ids = list(sample(distractors, 3))
-    term_ids.append(exercise.term_id)
-
-    choices = list(
-        Term.objects.filter(id__in=term_ids).values_list('expression', flat=True)
-    )
-
-    shuffle(choices)
-    return schema.TextImageMChoiceView(
-        image=exercise.term_image.image,
-        header=constants.TERM_IMAGE_TEXT_MCHOICE_HEADER,
-        choices=choices,
-    )
-
-
-@exercise_router.post(
-    path='/term-image-text-mchoice/{exercise_id}',
-    response=schema.ExerciseResponse,
-)
-def check_term_image_text_mchoice_exercise(
-    request,
-    exercise_id: int,
-    exercise_schema: schema.TextCheck,
-):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.TERM_IMAGE_TEXT_MCHOICE,
-    )
-
-    text = exercise.term.expression
-    correct = text.lower() == exercise_schema.text.lower()
-    return schema.ExerciseResponse(correct=correct, correct_answer=text)
-
-
-@exercise_router.get(
+exercises.TermConnectionExercise.as_endpoint(
+    router=exercise_router,
     path='/term-connection/{exercise_id}',
-    response={
-        200: schema.TextConnectionView,
-        401: core_schema.NotAuthenticated,
-        404: core_schema.NotFound,
-    },
-    summary='Exercício selecionar as conexões entre o termos.',
-    description='O usuário receberá um termo, no qual será necessário selecionar entre as 4 alternativas que tem conexão com o termo.',
+    ExerciseSchema=schema.TextConnectionView,
+    choices=(list[int], Field(min_length=4, max_length=4)),
 )
-def term_connection_exercise(request, exercise_id: int):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.TERM_CONNECTION,
-    )
-
-    distractors = exercise.additional_content.get('distractors')
-    term_ids = list(sample(distractors, 8))
-    connections = exercise.additional_content.get('connections')
-    term_ids.extend(sample(connections, 4))
-
-    choices = dict(Term.objects.filter(id__in=term_ids).values_list('id', 'expression'))
-
-    choices = list(choices.items())
-    shuffle(choices)
-    choices = dict(choices)
-    return schema.TextConnectionView(
-        header=constants.TERM_CONNECTION_HEADER.format(term=exercise.term.expression),
-        choices=choices,
-    )
-
-
-@exercise_router.post(
-    path='/term-connection/{exercise_id}',
-    response=schema.ExerciseResponse,
-)
-def check_term_connection_exercise(
-    request,
-    exercise_id: int,
-    exercise_schema: schema.TextConnectionCheck,
-):
-    exercise = get_object_or_404(
-        Exercise,
-        id=exercise_id,
-        type=ExerciseType.TERM_CONNECTION,
-    )
-
-    correct = all(
-        [
-            choice in exercise.additional_content.get('connections')
-            for choice in exercise_schema.choices
-        ]
-    )
-    wrong_choices = [
-        choice
-        for choice in exercise_schema.choices
-        if choice not in exercise.additional_content.get('connections')
-    ]
-    text = ','.join(
-        list(
-            Term.objects.filter(id__in=wrong_choices).values_list(
-                'expression', flat=True
-            )
-        )
-    )
-    return schema.ExerciseResponse(correct=correct, correct_answer=text)

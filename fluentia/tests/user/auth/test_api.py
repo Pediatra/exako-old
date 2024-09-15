@@ -27,7 +27,7 @@ def test_token_inexistent_user(client):
         token_url,
         data={'email': 'no_user@no_domain.com', 'password': 'testtest'},
     )
-    assert response.status_code == 400
+    assert response.status_code == 401
     assert response.json() == {'detail': 'could not validate credentials.'}
 
 
@@ -37,7 +37,7 @@ def test_token_wrong_password(client):
         token_url,
         data={'email': user.email, 'password': 'wrong_password'},
     )
-    assert response.status_code == 400
+    assert response.status_code == 401
     assert response.json() == {'detail': 'could not validate credentials.'}
 
 
@@ -66,5 +66,5 @@ def test_token_expiry(client, user):
             refresh_token_url,
             headers={'Authorization': f'Bearer {token}'},
         )
-        assert response.status_code == 400
+        assert response.status_code == 401
         assert response.json() == {'detail': 'could not validate credentials.'}

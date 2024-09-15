@@ -1,6 +1,8 @@
+from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -129,3 +131,8 @@ INTERNAL_IPS = [
 ]
 
 AUTH_USER_MODEL = 'user.User'
+
+LOGIN_URL = reverse_lazy('auth:login')
+
+TOKEN_EXPIRATION_DELTA = timedelta(days=7)
+JWT_ALGORITHM = 'HS256'

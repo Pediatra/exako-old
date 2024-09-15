@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Exako</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(90deg, #4F46E5, #7C3AED);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 w-full gradient-bg text-white p-4 flex justify-between items-center shadow-md z-50">
+        <div class="text-4xl font-bold ml-3 flex items-center">
+            <i class="fas fa-language mr-2"></i>
+            Exako
+        </div>
+        <ul class="flex space-x-6">
+            <li><a href="#" class="hover:text-gray-200 flex items-center"><i class="fas fa-home mr-1"></i> Início</a></li>
+            <li><a href="#" class="hover:text-gray-200 flex items-center"><i class="fas fa-info-circle mr-1"></i> Sobre</a></li>
+            <li><a href="#" class="hover:text-gray-200 flex items-center"><i class="fas fa-envelope mr-1"></i> Contato</a></li>
+        </ul>
+    </nav>
+
+   
+    <div class="flex min-h-screen bg-gray-100">
+        <main class="flex-1 flex items-center justify-center">
+            <div class="w-full max-w-md bg-white rounded-lg shadow-md p-8">
+                <h2 class="text-3xl font-bold text-center mb-6 text-indigo-600">Login</h2>
+                <form>
+                    <div class="mb-4">
+                        <label for="email" class="block mb-2 text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="password" class="block mb-2 text-sm font-medium text-gray-700">Senha</label>
+                        <input type="password" id="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-300">Entrar</button>
+                </form>
+                <div class="mt-4 text-center">
+                    <a href="#" class="text-sm text-indigo-600 hover:underline">Esqueceu sua senha?</a>
+                </div>
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">Não tem uma conta? <a href="#" class="text-indigo-600 hover:underline">Registre-se</a></p>
+                </div>
+
+                <button
+                hx-get="/test/"
+                hx-target="#response-container"
+                hx-swap="innerHTML"
+                >
+                   Clica
+            </button>
+            
+                <!-- Container para exibir a resposta -->
+                <div id="response-container"></div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

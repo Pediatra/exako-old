@@ -15,12 +15,18 @@ class ExerciseType(IntegerChoices):
         _('Multiple choice term definition'),
     )
     TERM_IMAGE_MCHOICE = 8, _('Term image multiple choice')
-    TERM_IMAGE_TEXT_MCHOICE = (
+    TERM_IMAGE_MCHOICE_TEXT = (
         9,
         _('Term text image multiple choice'),
     )
     TERM_CONNECTION = 10, _('Term connection')
     RANDOM = 12, _('Random')
+
+
+class ExerciseSubType(IntegerChoices):
+    TERM = 0, _('Term')
+    TERM_LEXICAL_VALUE = 1, _('Term Lexical Value')
+    TERM_LEXICAL_TERM_REF = 2, _('Term Lexical Term Reference')
 
 
 ORDER_SENTENCE_HEADER = _('Reordene as palavras para formar a frase correta.')
@@ -40,7 +46,7 @@ TERM_DEFINITION_MCHOICE_HEADER = _(
 TERM_IMAGE_MCHOICE_HEADER = _(
     'Escolha a imagem que corresponda com o termo você ouviu.'
 )
-TERM_IMAGE_TEXT_MCHOICE_HEADER = _('Escolha o termo que corresponda com a imagem.')
+TERM_IMAGE_MCHOICE_TEXT_HEADER = _('Escolha o termo que corresponda com a imagem.')
 TERM_CONNECTION_HEADER = _(
     "Escolha 4 alternativas que tenham relação com o termo '{term}'."
 )
