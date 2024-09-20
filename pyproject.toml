@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "fluentia"
+name = "exako"
 version = "0.1.0"
 description = ""
 authors = ["Gabriel Lustosa <lustosaki2@gmail.com>"]
@@ -44,7 +44,7 @@ extend_skip = ["migrations"]
 [tool.pytest.ini_options]
 pythonpath = "."
 addopts = '-p no:warnings'
-DJANGO_SETTINGS_MODULE = "fluentia.settings.test"
+DJANGO_SETTINGS_MODULE = "exako.settings.test"
 
 [tool.blue]
 extend-exclude = "(migrations/)"
@@ -54,6 +54,6 @@ lint = "ruff check . --fix && blue --check . --diff"
 format = "ruff format .  && isort ."
 run = "python manage.py runserver"
 pre_test = "task format"
-test = "pytest -s -x --cov=. -vv"
+test = "pytest -s --cov=. -vv"
 post_test = "coverage html"
 
