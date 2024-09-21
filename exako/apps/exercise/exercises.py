@@ -115,10 +115,8 @@ class Exercise(ABC):
             return ExerciseResponse(
                 **exercise.check(
                     request.user,
-                    answer=answer.model_dump(include=set(answer_fields.keys())),
-                    exercise_request=answer.model_dump(
-                        exclude=set(answer_fields.keys())
-                    ),
+                    answer=answer.model_dump()['answer'],
+                    exercise_request=answer.model_dump(exclude={'answer'}),
                 )
             )
 
@@ -618,14 +616,12 @@ class TermImageMChoiceExercise(Exercise):
         ]
         distractors = list(sample(distractors_list, 3))
         return dict(
-            TermImage.objects.filter(term_id__in=distractors).values_list(
-                'term_id', 'image'
-            )
+            TermImage.objects.filter(id__in=distractors).values_list('term_id', 'image')
         )
 
     def build(self) -> dict:
         choices = dict()
-        choices[self.exercise.term_id] = self.exercise.term_image.image
+        choices[self.correct_answer] = self.exercise.term_image.image.url
         choices.update(self._get_distractors())
         choices = _shuffle_dict(choices)
 
@@ -668,12 +664,12 @@ class TermImageMChoiceTextExercise(Exercise):
 
     def build(self) -> dict:
         choices = dict()
-        choices[self.exercise.term_id] = self.exercise.term.expression
+        choices[self.correct_answer] = self.exercise.term.expression
         choices.update(self._get_distractors())
         choices = _shuffle_dict(choices)
 
         return {
-            'image': self.exercise.term_image.image,
+            'image': self.exercise.term_image.image.url,
             'title': self.title,
             'description': self.description,
             'header': constants.TERM_IMAGE_MCHOICE_TEXT_HEADER,
@@ -724,7 +720,7 @@ class TermConnectionExercise(Exercise):
 
     @cached_property
     def correct_answer(self):
-        return self.exercise.additional_content.get('connections')
+        return self.exercise.additional_content.get('connections')['term']
 
     def assert_answer(self, answer: dict) -> bool:
         return all([choice in self.correct_answer for choice in answer['choices']])

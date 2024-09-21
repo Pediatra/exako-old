@@ -11,7 +11,7 @@ from exako.apps.term.constants import Language
 
 def _validate_sub_exercise_type(self):
     if not any([self.term, self.term_lexical]) or all([self.term, self.term_lexical]):
-        raise ValueError('exercise needs only one to form exercise sub type.')
+        raise ValueError('provide term or term_lexical, but not both or neither.')
 
     if (
         not self.additional_content
@@ -20,18 +20,6 @@ def _validate_sub_exercise_type(self):
         not in [value for value, _ in ExerciseSubType.choices]
     ):
         raise ValueError('sub type is not defined.')
-
-    if (
-        self.term_lexical
-        and self.additional_content['sub_type'] == ExerciseSubType.TERM
-    ):
-        raise ValueError('ExerciseSubType.TERM requires term.')
-
-    if self.term and self.additional_content['sub_type'] in [
-        ExerciseSubType.TERM_LEXICAL_VALUE,
-        ExerciseSubType.TERM_LEXICAL_TERM_REF,
-    ]:
-        raise ValueError('ExerciseSubType.TERM_LEXICAL requires term_lexical.')
 
 
 class ExerciseSchemaBase(Schema):
@@ -121,7 +109,9 @@ class TermMChoiceSchema(ExerciseSchemaBase):
 
     @model_validator(mode='after')
     def validate_distractors(self):
-        if self.term_lexical is None:
+        _validate_sub_exercise_type(self)
+        sub_type = self.additional_content['sub_type']
+        if sub_type == ExerciseSubType.TERM:
             if (
                 'distractors' not in self.additional_content
                 or 'term' not in self.additional_content['distractors']
@@ -139,16 +129,18 @@ class TermMChoiceSchema(ExerciseSchemaBase):
                 )
 
         if (
-            self.term_lexical is None
+            sub_type == ExerciseSubType.TERM
             and not isinstance(self.additional_content['distractors']['term'], list)
-            or self.term_lexical is not None
+            or sub_type
+            in [
+                ExerciseSubType.TERM_LEXICAL_TERM_REF,
+                ExerciseSubType.TERM_LEXICAL_VALUE,
+            ]
             and not isinstance(
                 self.additional_content['distractors']['term_lexical'], list
             )
         ):
             raise ValueError('invalid distractors format, it should be a id list.')
-
-        _validate_sub_exercise_type(self)
         return self
 
 
@@ -390,14 +382,12 @@ class ImageMChoiceView(ExerciseBaseView):
     audio_file: str = Field(examples=['https://example.com/my-audio.mp3'])
     choices: dict[int, str] = Field(
         examples=[
-            [
-                {
-                    1: 'https://example.com',
-                    2: 'https://example.com',
-                    3: 'https://example.com',
-                    4: 'https://example.com',
-                }
-            ]
+            {
+                1: 'https://example.com',
+                2: 'https://example.com',
+                3: 'https://example.com',
+                4: 'https://example.com',
+            }
         ],
         description='Será retornado sempre 4 alternativas contendo o id do termo referido e o link para imagem do termo.',
     )
@@ -405,7 +395,17 @@ class ImageMChoiceView(ExerciseBaseView):
 
 class TextImageMChoiceView(ExerciseBaseView):
     image: str = Field(examples=['https://example.com/my-image.png'])
-    choices: list[str] = Field(examples=[['casa', 'avião', 'jaguar', 'parede']])
+    choices: dict[int, str] = Field(
+        examples=[
+            {
+                1: 'casa',
+                2: 'avião',
+                3: 'jaguar',
+                4: 'parede',
+            }
+        ],
+        description='Será retornado sempre 4 alternativas contendo o id do termo referido e o link para imagem do termo.',
+    )
 
 
 class TextConnectionView(ExerciseBaseView):

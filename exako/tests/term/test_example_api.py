@@ -670,11 +670,11 @@ def test_create_term_example_translation_invalid_same_language_term_example(
 def test_create_term_example_translation_invalid_same_language(
     client, generate_payload, token_header, link_factory, link_name, language_ref
 ):
-    link_model = link_factory(**{language_ref: Language.PORTUGUESE})
+    link_model = link_factory(**{language_ref: Language.CHINESE})
     example = TermExampleFactory()
     payload = generate_payload(
         TermExampleTranslationFactory,
-        language=Language.PORTUGUESE,
+        language=Language.CHINESE,
     )
     payload.update(
         **{link_name: link_model.id},

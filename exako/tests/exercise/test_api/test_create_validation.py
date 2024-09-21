@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse_lazy
 
-from exako.apps.exercise.constants import ExerciseType
+from exako.apps.exercise.constants import ExerciseSubType, ExerciseType
 from exako.apps.term.constants import TermLexicalType
 from exako.apps.term.models import TermExampleLink, TermLexical
 from exako.tests.factories import exercise as exercise_factories
@@ -367,21 +367,48 @@ def test_create_order_sentence_exercise_invalid_distractor_format_is_not_a_list(
 @pytest.mark.parametrize(
     'factory, additional_content',
     [
-        (exercise_factories.TermMChoiceFactory, {}),
-        (exercise_factories.TermMChoiceLexicalFactory, {}),
-        (exercise_factories.TermMChoiceLexicalTermRefFactory, {}),
+        (exercise_factories.TermMChoiceFactory, {'sub_type': ExerciseSubType.TERM}),
+        (
+            exercise_factories.TermMChoiceLexicalFactory,
+            {'sub_type': ExerciseSubType.TERM_LEXICAL_VALUE},
+        ),
+        (
+            exercise_factories.TermMChoiceLexicalTermRefFactory,
+            {'sub_type': ExerciseSubType.TERM_LEXICAL_TERM_REF},
+        ),
         (exercise_factories.TermDefinitionMChoiceFactory, {}),
         (exercise_factories.TermImageMChoiceFactory, {}),
         (exercise_factories.TermImageMChoiceTextFactory, {}),
         (exercise_factories.TermConnectionFactory, {}),
-        (exercise_factories.TermMChoiceFactory, {'distractors': {}}),
-        (exercise_factories.TermMChoiceFactory, {'distractors': {'term_lexical': []}}),
-        (exercise_factories.TermMChoiceLexicalFactory, {'distractors': {}}),
-        (exercise_factories.TermMChoiceLexicalFactory, {'distractors': {'term': []}}),
-        (exercise_factories.TermMChoiceLexicalTermRefFactory, {'distractors': {}}),
+        (
+            exercise_factories.TermMChoiceFactory,
+            {'sub_type': ExerciseSubType.TERM, 'distractors': {}},
+        ),
+        (
+            exercise_factories.TermMChoiceFactory,
+            {'sub_type': ExerciseSubType.TERM, 'distractors': {'term_lexical': []}},
+        ),
+        (
+            exercise_factories.TermMChoiceLexicalFactory,
+            {'sub_type': ExerciseSubType.TERM_LEXICAL_VALUE, 'distractors': {}},
+        ),
+        (
+            exercise_factories.TermMChoiceLexicalFactory,
+            {
+                'sub_type': ExerciseSubType.TERM_LEXICAL_VALUE,
+                'distractors': {'term': []},
+            },
+        ),
         (
             exercise_factories.TermMChoiceLexicalTermRefFactory,
-            {'distractors': {'term': []}},
+            {'sub_type': ExerciseSubType.TERM_LEXICAL_TERM_REF, 'distractors': {}},
+        ),
+        (
+            exercise_factories.TermMChoiceLexicalTermRefFactory,
+            {
+                'sub_type': ExerciseSubType.TERM_LEXICAL_TERM_REF,
+                'distractors': {'term': []},
+            },
         ),
         (exercise_factories.TermDefinitionMChoiceFactory, {'distractors': {}}),
         (exercise_factories.TermImageMChoiceFactory, {'distractors': {}}),
@@ -414,15 +441,21 @@ def test_create_exercise_invalid_distractor_format(
     [
         (
             exercise_factories.TermMChoiceFactory,
-            {'distractors': {'term': 1}},
+            {'sub_type': ExerciseSubType.TERM, 'distractors': {'term': 1}},
         ),
         (
             exercise_factories.TermMChoiceLexicalFactory,
-            {'distractors': {'term_lexical': 1}},
+            {
+                'sub_type': ExerciseSubType.TERM_LEXICAL_VALUE,
+                'distractors': {'term_lexical': 1},
+            },
         ),
         (
             exercise_factories.TermMChoiceLexicalTermRefFactory,
-            {'distractors': {'term_lexical': 1}},
+            {
+                'sub_type': ExerciseSubType.TERM_LEXICAL_TERM_REF,
+                'distractors': {'term_lexical': 1},
+            },
         ),
         (
             exercise_factories.TermDefinitionMChoiceFactory,
@@ -464,7 +497,7 @@ def test_create_exercise_invalid_distractor_format_is_not_a_list(
 
 @pytest.mark.parametrize(
     'additional_content',
-    [{}, {'connections': {}}],
+    [{'distractors': {'term': []}}, {'distractors': {'term': []}, 'connections': {}}],
 )
 def test_create_term_connection_exercise_invalid_connection_format(
     client, token_header, generate_payload, additional_content
@@ -481,7 +514,7 @@ def test_create_term_connection_exercise_invalid_connection_format(
 
     assert response.status_code == 422
     assert (
-        'invalid distractors format, exercise needs distractors to form'
+        'invalid connections format, exercise needs connections to form the connections.'
         in response.json()['detail'][0]['msg']
     )
 
@@ -490,7 +523,10 @@ def test_create_term_connection_exercise_invalid_connection_format_is_not_a_list
     client, token_header, generate_payload
 ):
     payload = generate_payload(exercise_factories.TermConnectionFactory)
-    payload['additional_content'] = {'connections': {'term': 1}}
+    payload['additional_content'] = {
+        'distractors': {'term': []},
+        'connections': {'term': 1},
+    }
 
     response = client.post(
         create_exercise_router,
@@ -501,7 +537,7 @@ def test_create_term_connection_exercise_invalid_connection_format_is_not_a_list
 
     assert response.status_code == 422
     assert (
-        'invalid distractors format, exercise needs distractors to form'
+        'invalid connections format, it should be a id list.'
         in response.json()['detail'][0]['msg']
     )
 
@@ -511,15 +547,24 @@ def test_create_term_connection_exercise_invalid_connection_format_is_not_a_list
     [
         (
             exercise_factories.TermMChoiceFactory,
-            {'distractors': {'term': list(range(1000, 1010))}},
+            {
+                'sub_type': ExerciseSubType.TERM,
+                'distractors': {'term': list(range(1000, 1010))},
+            },
         ),
         (
             exercise_factories.TermMChoiceLexicalFactory,
-            {'distractors': {'term_lexical': list(range(1000, 1010))}},
+            {
+                'sub_type': ExerciseSubType.TERM_LEXICAL_VALUE,
+                'distractors': {'term_lexical': list(range(1000, 1010))},
+            },
         ),
         (
             exercise_factories.TermMChoiceLexicalTermRefFactory,
-            {'distractors': {'term_lexical': list(range(1000, 1010))}},
+            {
+                'sub_type': ExerciseSubType.TERM_LEXICAL_TERM_REF,
+                'distractors': {'term_lexical': list(range(1000, 1010))},
+            },
         ),
         (
             exercise_factories.TermDefinitionMChoiceFactory,
@@ -589,4 +634,174 @@ def test_create_term_connection_exercise_invalid_connection(
     assert (
         'exercise needs at least 4 additional_content[connections]'
         in response.json()['detail']
+    )
+
+
+@pytest.mark.parametrize(
+    'exercise_factory',
+    [
+        exercise_factories.ListenTermFactory,
+        exercise_factories.SpeakTermFactory,
+        exercise_factories.TermMChoiceFactory,
+    ],
+)
+def test_create_exercise_sub_type_field_not_defined(
+    client, generate_payload, token_header, exercise_factory
+):
+    payload = generate_payload(exercise_factory)
+    payload['term'] = None
+    payload['term_lexical'] = None
+
+    response = client.post(
+        create_exercise_router,
+        payload,
+        headers=token_header,
+        content_type='application/json',
+    )
+
+    assert response.status_code == 422
+    assert (
+        'provide term or term_lexical, but not both or neither.'
+        in response.json()['detail'][0]['msg']
+    )
+
+
+@pytest.mark.parametrize(
+    'exercise_factory',
+    [
+        exercise_factories.ListenTermFactory,
+        exercise_factories.SpeakTermFactory,
+        exercise_factories.TermMChoiceFactory,
+    ],
+)
+def test_create_exercise_sub_type_field_both_fields(
+    client, generate_payload, token_header, exercise_factory
+):
+    payload = generate_payload(exercise_factory)
+    payload['term'] = 1
+    payload['term_lexical'] = 1
+
+    response = client.post(
+        create_exercise_router,
+        payload,
+        headers=token_header,
+        content_type='application/json',
+    )
+
+    assert response.status_code == 422
+    assert (
+        'provide term or term_lexical, but not both or neither.'
+        in response.json()['detail'][0]['msg']
+    )
+
+
+@pytest.mark.parametrize(
+    'exercise_factory, additional_content',
+    [
+        (exercise_factories.ListenTermFactory, None),
+        (exercise_factories.SpeakTermFactory, None),
+        (exercise_factories.ListenTermFactory, {}),
+        (exercise_factories.SpeakTermFactory, {}),
+        (exercise_factories.TermMChoiceFactory, {}),
+        (exercise_factories.ListenTermFactory, {'sub_type': 10}),
+        (exercise_factories.SpeakTermFactory, {'sub_type': 10}),
+        (exercise_factories.TermMChoiceFactory, {'sub_type': 10}),
+    ],
+)
+def test_create_exercise_sub_type_is_not_defined(
+    client, generate_payload, token_header, exercise_factory, additional_content
+):
+    payload = generate_payload(exercise_factory)
+    payload['additional_content'] = additional_content
+
+    response = client.post(
+        create_exercise_router,
+        payload,
+        headers=token_header,
+        content_type='application/json',
+    )
+
+    assert response.status_code == 422
+    assert 'sub type is not defined.' in response.json()['detail'][0]['msg']
+
+
+@pytest.mark.parametrize(
+    'exercise_factory',
+    [
+        exercise_factories.ListenTermFactory,
+        exercise_factories.SpeakTermFactory,
+        exercise_factories.TermMChoiceFactory,
+    ],
+)
+def test_create_exercise_sub_type_term_invalid(
+    client, generate_payload, token_header, exercise_factory
+):
+    payload = generate_payload(exercise_factory)
+    payload['term'] = None
+    payload['term_lexical'] = TermLexicalFactory().id
+
+    response = client.post(
+        create_exercise_router,
+        payload,
+        headers=token_header,
+        content_type='application/json',
+    )
+
+    assert response.status_code == 422
+    assert response.json()['detail'] == 'ExerciseSubType.TERM requires term'
+
+
+@pytest.mark.parametrize(
+    'exercise_factory',
+    [
+        exercise_factories.ListenTermLexicalFactory,
+        exercise_factories.SpeakTermLexicalFactory,
+        exercise_factories.TermMChoiceLexicalFactory,
+    ],
+)
+def test_create_exercise_sub_type_term_lexical_value_invalid(
+    client, generate_payload, token_header, exercise_factory
+):
+    payload = generate_payload(exercise_factory)
+    TermLexical.objects.filter(id=payload['term_lexical']).update(value=None)
+
+    response = client.post(
+        create_exercise_router,
+        payload,
+        headers=token_header,
+        content_type='application/json',
+    )
+
+    assert response.status_code == 422
+    assert (
+        response.json()['detail']
+        == 'ExerciseSubType.TERM_LEXICAL_VALUE requires term_lexical.value'
+    )
+
+
+@pytest.mark.parametrize(
+    'exercise_factory',
+    [
+        exercise_factories.ListenTermLexicalTermRefFactory,
+        exercise_factories.SpeakTermLexicalTermRefFactory,
+        exercise_factories.TermMChoiceLexicalTermRefFactory,
+    ],
+)
+def test_create_exercise_sub_type_term_lexical_ref_invalid(
+    client, generate_payload, token_header, exercise_factory
+):
+    payload = generate_payload(exercise_factory)
+    TermLexical.objects.filter(id=payload['term_lexical']).update(term_value_ref=None)
+
+    response = client.post(
+        create_exercise_router,
+        payload,
+        headers=token_header,
+        content_type='application/json',
+    )
+
+    assert response.status_code == 422
+    assert (
+        response.json()['detail']
+        == 'ExerciseSubType.TERM_LEXICAL_TERM_REF requires term_lexical.term_value_ref'
     )

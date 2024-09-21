@@ -11,6 +11,7 @@ from exako.apps.term.models import (
     Term,
     TermDefinition,
     TermExampleLink,
+    TermImage,
     TermLexical,
     TermPronunciation,
 )
@@ -802,6 +803,292 @@ class TestTermDefinitionMChoiceExercise:
     def test_check_incorrect(self, exercise, user):
         exercise_request = exercise.build()
         answer = {'term_definition_id': exercise.correct_answer + 1}
+        response = exercise.check(user, answer, exercise_request)
+
+        assert response == {
+            'correct': False,
+            'correct_answer': exercise.correct_answer,
+        }
+        history = ExerciseHistory.objects.filter(
+            user=user, exercise=exercise.exercise
+        ).first()
+        assert history is not None
+        assert history.correct is False
+        assert history.response == {
+            **answer,
+            'correct': False,
+            'correct_answer': exercise.correct_answer,
+        }
+        assert _convert_keys_to_int(history.request) == exercise_request
+
+
+class TestTermImageMChoiceExercise:
+    @pytest.fixture
+    def exercise(self):
+        return exercises.TermImageMChoiceExercise(factory.TermImageMChoiceFactory().id)
+
+    def test_get_distractors(self, exercise):
+        distractors_list = exercise.exercise.additional_content.get('distractors')[
+            'term_image'
+        ]
+        distractors_query = dict(
+            TermImage.objects.filter(id__in=distractors_list).values_list(
+                'term_id', 'image'
+            )
+        )
+        exercise_distractors = exercise._get_distractors()
+        assert (
+            sum(
+                [
+                    id_ in exercise_distractors
+                    and image in exercise_distractors.values()
+                    for id_, image in distractors_query.items()
+                ]
+            )
+            == 3
+        )
+
+    def test_build(self, exercise):
+        build = exercise.build()
+
+        assert build['title'] == exercises.TermImageMChoiceExercise.title
+        assert build['description'] == exercises.TermImageMChoiceExercise.description
+        assert build['header'] == constants.TERM_IMAGE_MCHOICE_HEADER
+        assert build['audio_file'] == exercise.exercise.term_pronunciation.audio_file
+        assert len(build['choices']) == 4
+        assert exercise.correct_answer in build['choices']
+        assert exercise.exercise.term_image.image.url in build['choices'].values()
+
+    def test_correct_answer(self, exercise):
+        assert exercise.correct_answer == exercise.exercise.term_id
+
+    def test_assert_answer_correct(self, exercise):
+        assert exercise.assert_answer({'term_id': exercise.correct_answer})
+
+    def test_assert_answer_incorrect(self, exercise):
+        assert not exercise.assert_answer({'term_id': exercise.correct_answer + 1})
+
+    def test_check_correct(self, exercise, user):
+        exercise_request = exercise.build()
+        answer = {'term_id': exercise.correct_answer}
+        response = exercise.check(user, answer, exercise_request)
+
+        assert response == {
+            'correct': True,
+            'correct_answer': exercise.correct_answer,
+        }
+        history = ExerciseHistory.objects.filter(
+            user=user, exercise=exercise.exercise
+        ).first()
+        assert history is not None
+        assert history.correct is True
+        assert history.response == {
+            **answer,
+            'correct': True,
+            'correct_answer': exercise.correct_answer,
+        }
+        assert _convert_keys_to_int(history.request) == exercise_request
+
+    def test_check_incorrect(self, exercise, user):
+        exercise_request = exercise.build()
+        answer = {'term_id': exercise.correct_answer + 1}
+        response = exercise.check(user, answer, exercise_request)
+
+        assert response == {
+            'correct': False,
+            'correct_answer': exercise.correct_answer,
+        }
+        history = ExerciseHistory.objects.filter(
+            user=user, exercise=exercise.exercise
+        ).first()
+        assert history is not None
+        assert history.correct is False
+        assert history.response == {
+            **answer,
+            'correct': False,
+            'correct_answer': exercise.correct_answer,
+        }
+        assert _convert_keys_to_int(history.request) == exercise_request
+
+
+class TestTermImageMChoiceTextExercise:
+    @pytest.fixture
+    def exercise(self):
+        return exercises.TermImageMChoiceTextExercise(
+            factory.TermImageMChoiceTextFactory().id
+        )
+
+    def test_get_distractors(self, exercise):
+        distractors_list = exercise.exercise.additional_content.get('distractors')[
+            'term'
+        ]
+        distractors_query = dict(
+            Term.objects.filter(id__in=distractors_list).values_list('id', 'expression')
+        )
+        exercise_distractors = exercise._get_distractors()
+        assert (
+            sum(
+                [
+                    id_ in exercise_distractors
+                    and expression in exercise_distractors.values()
+                    for id_, expression in distractors_query.items()
+                ]
+            )
+            == 3
+        )
+
+    def test_build(self, exercise):
+        build = exercise.build()
+
+        assert build['title'] == exercises.TermImageMChoiceTextExercise.title
+        assert (
+            build['description'] == exercises.TermImageMChoiceTextExercise.description
+        )
+        assert build['header'] == constants.TERM_IMAGE_MCHOICE_TEXT_HEADER
+        assert build['image'] == exercise.exercise.term_image.image.url
+        assert len(build['choices']) == 4
+        assert exercise.correct_answer in build['choices']
+        assert exercise.exercise.term.expression in build['choices'].values()
+
+    def test_correct_answer(self, exercise):
+        assert exercise.correct_answer == exercise.exercise.term_id
+
+    def test_assert_answer_correct(self, exercise):
+        assert exercise.assert_answer({'term_id': exercise.correct_answer})
+
+    def test_assert_answer_incorrect(self, exercise):
+        assert not exercise.assert_answer({'term_id': exercise.correct_answer + 1})
+
+    def test_check_correct(self, exercise, user):
+        exercise_request = exercise.build()
+        answer = {'term_id': exercise.correct_answer}
+        response = exercise.check(user, answer, exercise_request)
+
+        assert response == {
+            'correct': True,
+            'correct_answer': exercise.correct_answer,
+        }
+        history = ExerciseHistory.objects.filter(
+            user=user, exercise=exercise.exercise
+        ).first()
+        assert history is not None
+        assert history.correct is True
+        assert history.response == {
+            **answer,
+            'correct': True,
+            'correct_answer': exercise.correct_answer,
+        }
+        assert _convert_keys_to_int(history.request) == exercise_request
+
+    def test_check_incorrect(self, exercise, user):
+        exercise_request = exercise.build()
+        answer = {'term_id': exercise.correct_answer + 1}
+        response = exercise.check(user, answer, exercise_request)
+
+        assert response == {
+            'correct': False,
+            'correct_answer': exercise.correct_answer,
+        }
+        history = ExerciseHistory.objects.filter(
+            user=user, exercise=exercise.exercise
+        ).first()
+        assert history is not None
+        assert history.correct is False
+        assert history.response == {
+            **answer,
+            'correct': False,
+            'correct_answer': exercise.correct_answer,
+        }
+        assert _convert_keys_to_int(history.request) == exercise_request
+
+
+class TestTermConnectionExercise:
+    @pytest.fixture
+    def exercise(self):
+        return exercises.TermConnectionExercise(factory.TermConnectionFactory().id)
+
+    def test_build(self, exercise):
+        build = exercise.build()
+
+        assert build['title'] == exercises.TermConnectionExercise.title
+        assert build['description'] == exercises.TermConnectionExercise.description
+        assert build['header'] == constants.TERM_CONNECTION_HEADER.format(
+            term=exercise.exercise.term.expression
+        )
+        assert len(build['choices']) == 12
+
+        distractors_list = exercise.exercise.additional_content.get('distractors')[
+            'term'
+        ]
+        distractors_query = dict(
+            Term.objects.filter(id__in=distractors_list).values_list('id', 'expression')
+        )
+        assert (
+            sum(
+                [
+                    id_ in build['choices'] and expression in build['choices'].values()
+                    for id_, expression in distractors_query.items()
+                ]
+            )
+            == 8
+        )
+
+        connections_list = exercise.exercise.additional_content.get('connections')[
+            'term'
+        ]
+        connections_query = dict(
+            Term.objects.filter(id__in=connections_list).values_list('id', 'expression')
+        )
+        assert (
+            sum(
+                [
+                    id_ in build['choices'] and expression in build['choices'].values()
+                    for id_, expression in connections_query.items()
+                ]
+            )
+            == 4
+        )
+
+    def test_correct_answer(self, exercise):
+        assert (
+            exercise.correct_answer
+            == exercise.exercise.additional_content.get('connections')['term']
+        )
+
+    def test_assert_answer_correct(self, exercise):
+        assert exercise.assert_answer({'choices': exercise.correct_answer})
+
+    def test_assert_answer_incorrect(self, exercise):
+        assert not exercise.assert_answer(
+            {'choices': exercise.exercise.additional_content.get('distractors')['term']}
+        )
+
+    def test_check_correct(self, exercise, user):
+        exercise_request = exercise.build()
+        answer = {'choices': exercise.correct_answer}
+        response = exercise.check(user, answer, exercise_request)
+
+        assert response == {
+            'correct': True,
+            'correct_answer': exercise.correct_answer,
+        }
+        history = ExerciseHistory.objects.filter(
+            user=user, exercise=exercise.exercise
+        ).first()
+        assert history is not None
+        assert history.correct is True
+        assert history.response == {
+            **answer,
+            'correct': True,
+            'correct_answer': exercise.correct_answer,
+        }
+        assert _convert_keys_to_int(history.request) == exercise_request
+
+    def test_check_incorrect(self, exercise, user):
+        exercise_request = exercise.build()
+        answer = {
+            'choices': exercise.exercise.additional_content.get('distractors')['term']
+        }
         response = exercise.check(user, answer, exercise_request)
 
         assert response == {

@@ -27,24 +27,27 @@ def validate_exercise(): ...
 )
 def validate_sub_type_exercise(exercise):
     sub_type = exercise.additional_content['sub_type']
-    if sub_type == ExerciseSubType.TERM_LEXICAL_VALUE:
-        if not exercise.term_lexical.value:
-            raise HttpError(
-                status_code=422,
-                message='ExerciseSubType.TERM_LEXICAL_VALUE requires term_lexical.value',
-            )
-    elif sub_type == ExerciseSubType.TERM_LEXICAL_TERM_REF:
-        if not exercise.term_lexical.term_value_ref:
-            raise HttpError(
-                status_code=422,
-                message='ExerciseSubType.TERM_LEXICAL_TERM_REF requires term_lexical.term_value_ref',
-            )
-    elif sub_type == ExerciseSubType.TERM:
-        if not exercise.term:
-            raise HttpError(
-                status_code=422,
-                message='ExerciseSubType.TERM requires term',
-            )
+    if (
+        sub_type == ExerciseSubType.TERM_LEXICAL_VALUE
+        and not exercise.term_lexical.value
+    ):
+        raise HttpError(
+            status_code=422,
+            message='ExerciseSubType.TERM_LEXICAL_VALUE requires term_lexical.value',
+        )
+    elif (
+        sub_type == ExerciseSubType.TERM_LEXICAL_TERM_REF
+        and not exercise.term_lexical.term_value_ref
+    ):
+        raise HttpError(
+            status_code=422,
+            message='ExerciseSubType.TERM_LEXICAL_TERM_REF requires term_lexical.term_value_ref',
+        )
+    elif sub_type == ExerciseSubType.TERM and not exercise.term:
+        raise HttpError(
+            status_code=422,
+            message='ExerciseSubType.TERM requires term',
+        )
 
 
 @validate_exercise.register(
