@@ -16,7 +16,7 @@ from exako.apps.term.models import (
 
 class TermFactory(factory.django.DjangoModelFactory):
     expression = factory.Faker('sentence')
-    language = Language.PORTUGUESE
+    language = Language.PORTUGUESE_BRASILIAN
     additional_content = {'syllable': ['ca', 'sa'], 'part': 'en'}
 
     class Meta:
@@ -34,7 +34,7 @@ class TermLexicalFactory(factory.django.DjangoModelFactory):
 
 
 class TermExampleFactory(factory.django.DjangoModelFactory):
-    language = Language.PORTUGUESE
+    language = Language.PORTUGUESE_BRASILIAN
     example = factory.Faker('sentence', nb_words=8)
     level = fuzzy.FuzzyChoice(Level)
     additional_content = {'syllable': ['ca', 'sa'], 'part': 'en'}

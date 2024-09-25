@@ -27,24 +27,62 @@ class TermManager(models.Manager):
             super()
             .get_queryset()
             .filter(
-                models.Q(
-                    expression__ct=expression,
-                    language=language,
-                )
-                | models.Q(
+                expression__ct=expression,
+                language=language,
+            )
+            .union(
+                Term.objects.filter(
                     id__in=models.Subquery(
                         TermLexical.objects.select_related('term')
                         .filter(
                             type=constants.TermLexicalType.INFLECTION,
                             value__ct=expression,
-                            term__language=models.OuterRef('language'),
+                            term__language=language,
                         )
-                        .values_list('term_id', flat=True)
+                        .values('term_id')
+                    ),
+                )
+            )
+            .first()
+        )
+        return term_query
+
+    def search(self, expression, language):
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                models.Q(
+                    expression__ct_icontains=expression,
+                    language=language,
+                )
+                | models.Q(
+                    id__in=models.Subquery(
+                        TermLexical.objects.filter(
+                            type=constants.TermLexicalType.INFLECTION,
+                            value__ct_icontains=expression,
+                            term__language=models.OuterRef('language'),
+                        ).values_list('term_id', flat=True)
                     ),
                 ),
             )
+            .distinct()
         )
-        return term_query
+
+    def search_reverse(self, expression, language, translation_language):
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                id__in=models.Subquery(
+                    TermDefinitionTranslation.objects.filter(
+                        term_definition__term__language=language,
+                        meaning__ct_icontains=expression,
+                        language=translation_language,
+                    ).values('term_definition__term_id')
+                )
+            )
+        )
 
 
 class Term(TermBase):
@@ -137,6 +175,9 @@ class TermDefinition(TermBase):
         blank=True,
     )
 
+    def get_part_of_speech(self):
+        return constants.PartOfSpeech(int(self.part_of_speech)).label
+
 
 class TermDefinitionTranslation(TermBase):
     language = models.CharField(
@@ -225,62 +266,6 @@ class TermExampleLink(TermBase):
         ]
 
 
-class TermExampleTranslationLink(TermBase):
-    language = models.CharField(
-        max_length=50,
-        choices=constants.Language.choices,
-    )
-    highlight = ArrayField(
-        ArrayField(models.IntegerField(), size=2),
-        blank=False,
-        null=False,
-    )
-    term_example = models.ForeignKey(
-        TermExample,
-        on_delete=models.CASCADE,
-    )
-    term = models.ForeignKey(
-        Term,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
-    term_definition = models.ForeignKey(
-        TermDefinition,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
-    term_lexical = models.ForeignKey(
-        TermLexical,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                'term',
-                'term_example',
-                'language',
-                name='unique_term_example_translation_link',
-            ),
-            models.UniqueConstraint(
-                'term_definition',
-                'term_example',
-                'language',
-                name='unique_term_definition_translation_link',
-            ),
-            models.UniqueConstraint(
-                'term_lexical',
-                'term_example',
-                'language',
-                name='unique_term_lexical_translation_link',
-            ),
-        ]
-
-
 @receiver(pre_save)
 def register_validators(sender, instance, **kwargs):
     validate_term(sender.__name__, instance=instance)
@@ -300,11 +285,11 @@ class CleanText(models.Lookup):
 
 @models.CharField.register_lookup
 @models.TextField.register_lookup
-class CleanTextSimilarity(models.Lookup):
-    lookup_name = 'ct_similarity'
+class CleanTextIContains(models.Lookup):
+    lookup_name = 'ct_icontains'
 
     def as_sql(self, compiler, connection):
         lhs, lhs_params = self.process_lhs(compiler, connection)
         rhs, rhs_params = self.process_rhs(compiler, connection)
         params = lhs_params + rhs_params
-        return f'similarity(clean_text({lhs}), clean_text({rhs})) > 0.7', params
+        return f"clean_text({lhs}) LIKE '%%' || clean_text({rhs}) || '%%'", params

@@ -152,7 +152,7 @@ def test_create_term_definition_term_lexical_invalid_language_ref(
     client, generate_payload, token_header
 ):
     term = TermFactory(language=Language.CHINESE)
-    term_lexical = TermLexicalFactory(term__language=Language.PORTUGUESE)
+    term_lexical = TermLexicalFactory(term__language=Language.PORTUGUESE_BRASILIAN)
     payload = generate_payload(
         TermDefinitionFactory,
         term=term,
@@ -423,7 +423,7 @@ def test_get_term_definition_translation_not_found(client):
     response = client.get(
         get_term_definition_translation_route(
             term_definition=123,
-            language=Language.PORTUGUESE,
+            language=Language.PORTUGUESE_BRASILIAN,
         )
     )
 

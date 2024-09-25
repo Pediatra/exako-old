@@ -22,7 +22,6 @@ from ninja import NinjaAPI
 
 from exako.apps.card.api.routers import card_router
 from exako.apps.term.api.routers.term import term_router
-from exako.apps.term.views import home_home
 from exako.apps.user.auth.api import auth_router
 from exako.apps.user.auth.exception import InvalidToken
 
@@ -37,7 +36,6 @@ urlpatterns = [
     path('api/', api.urls),
     path('', include('exako.apps.term.urls')),
     path('auth/', include('exako.apps.user.urls')),
-    path('test/', home_home),
 ]
 
 

@@ -136,3 +136,5 @@ LOGIN_URL = reverse_lazy('auth:login')
 
 TOKEN_EXPIRATION_DELTA = timedelta(days=7)
 JWT_ALGORITHM = 'HS256'
+
+APPEND_SLASH = False

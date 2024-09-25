@@ -17,7 +17,7 @@ class CardSetList(FilterSchema):
     name: str | None = Field(
         default=None,
         description='Nome a ser filtrado.',
-        q='name__ct_similarity',
+        q='name__ct_icontains',
     )
 
 
@@ -50,12 +50,12 @@ class CardList(FilterSchema):
     expression: str | None = Field(
         default=None,
         description='Filtrar por termo.',
-        q='term__expression__ct_similarity',
+        q='term__expression__ct_icontains',
     )
     note: str | None = Field(
         default=None,
         description='Filtrar por anotação.',
-        q='note__ct_similarity',
+        q='note__ct_icontains',
     )
 
 

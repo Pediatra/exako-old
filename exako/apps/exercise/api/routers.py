@@ -45,7 +45,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercise1': {
                             'summary': 'OrderSentenceSchema',
                             'value': schema.OrderSentenceSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.ORDER_SENTENCE,
                                 term_example=1,
                                 additional_content={
@@ -56,7 +56,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercise2': {
                             'summary': 'ListenTermSchema',
                             'value': schema.ListenTermSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.LISTEN_TERM,
                                 term_pronunciation=1,
                                 term=1,
@@ -66,7 +66,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercises3': {
                             'summary': 'ListenSentenceSchema',
                             'value': schema.ListenSentenceSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.LISTEN_SENTENCE,
                                 term_pronunciation=1,
                                 term_example=1,
@@ -75,7 +75,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercises4': {
                             'summary': 'ListenTermMChoiceSchema',
                             'value': schema.ListenTermMChoiceSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.LISTEN_TERM_MCHOICE,
                                 term_pronunciation=1,
                                 term=1,
@@ -84,7 +84,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercises5': {
                             'summary': 'SpeakTermSchema',
                             'value': schema.SpeakTermSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.SPEAK_TERM,
                                 term_pronunciation=1,
                                 term=1,
@@ -94,7 +94,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercises6': {
                             'summary': 'SpeakSentenceSchema',
                             'value': schema.SpeakSentenceSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.SPEAK_SENTENCE,
                                 term_pronunciation=1,
                                 term_example=1,
@@ -103,7 +103,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercises7': {
                             'summary': 'TermMChoiceSchema',
                             'value': schema.TermMChoiceSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.TERM_MCHOICE,
                                 term=1,
                                 term_example=1,
@@ -119,7 +119,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercises8': {
                             'summary': 'TermDefinitionMChoiceSchema',
                             'value': schema.TermDefinitionMChoiceSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.TERM_DEFINITION_MCHOICE,
                                 term=1,
                                 term_definition=1,
@@ -131,7 +131,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercises9': {
                             'summary': 'TermImageMChoiceSchema',
                             'value': schema.TermImageMChoiceSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.TERM_IMAGE_MCHOICE,
                                 term=1,
                                 term_image=1,
@@ -144,7 +144,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercises10': {
                             'summary': 'TermImageMChoiceTextSchema',
                             'value': schema.TermImageMChoiceTextSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.TERM_IMAGE_MCHOICE_TEXT,
                                 term=1,
                                 term_image=1,
@@ -156,7 +156,7 @@ exercise_router = Router(tags=['Exercício'], auth=AuthBearer())
                         'exercises11': {
                             'summary': 'TermConnectionSchema',
                             'value': schema.TermConnectionSchema(
-                                language=Language.PORTUGUESE,
+                                language=Language.PORTUGUESE_BRASILIAN,
                                 type=ExerciseType.TERM_CONNECTION,
                                 term=1,
                                 additional_content={

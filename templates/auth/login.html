@@ -1,3 +1,5 @@
+{% load i18n %}
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -6,7 +8,7 @@
     <title>Login - Exako</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+    <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
         body {
@@ -25,47 +27,76 @@
             Exako
         </div>
         <ul class="flex space-x-6">
-            <li><a href="#" class="hover:text-gray-200 flex items-center"><i class="fas fa-home mr-1"></i> Início</a></li>
-            <li><a href="#" class="hover:text-gray-200 flex items-center"><i class="fas fa-info-circle mr-1"></i> Sobre</a></li>
-            <li><a href="#" class="hover:text-gray-200 flex items-center"><i class="fas fa-envelope mr-1"></i> Contato</a></li>
+            <li><a href="#" class="hover:text-gray-200 flex items-center"><i class="fas fa-home mr-1"></i> {% translate 'Início' %}</a></li>
+            <li><a href="#" class="hover:text-gray-200 flex items-center"><i class="fas fa-info-circle mr-1"></i>{% translate 'Sobre' %}</a></li>
+            <li><a href="#" class="hover:text-gray-200 flex items-center"><i class="fas fa-envelope mr-1"></i>{% translate 'Contato' %}</a></li>
         </ul>
     </nav>
 
-   
     <div class="flex min-h-screen bg-gray-100">
         <main class="flex-1 flex items-center justify-center">
             <div class="w-full max-w-md bg-white rounded-lg shadow-md p-8">
-                <h2 class="text-3xl font-bold text-center mb-6 text-indigo-600">Login</h2>
-                <form>
+                <h2 class="text-3xl font-bold text-center mb-6 text-indigo-600">{% translate 'Login' %}</h2>
+                <div id="error-messages" class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md hidden">
+                </div>
+                <div>
                     <div class="mb-4">
-                        <label for="email" class="block mb-2 text-sm font-medium text-gray-700">Email</label>
+                        <label for="email" class="block mb-2 text-sm font-medium text-gray-700">{% translate 'Email' %}</label>
                         <input type="email" id="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                     </div>
                     <div class="mb-6">
-                        <label for="password" class="block mb-2 text-sm font-medium text-gray-700">Senha</label>
+                        <label for="password" class="block mb-2 text-sm font-medium text-gray-700">{% translate 'Senha' %}</label>
                         <input type="password" id="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                     </div>
-                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-300">Entrar</button>
-                </form>
+                    <button _="on click call setAuthToken()" 
+                    class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-300">{% translate 'Entrar' %}</button>
+                </div>
                 <div class="mt-4 text-center">
-                    <a href="#" class="text-sm text-indigo-600 hover:underline">Esqueceu sua senha?</a>
+                    <a href="#" class="text-sm text-indigo-600 hover:underline">{% translate 'Esqueceu sua senha?' %}</a>
                 </div>
                 <div class="mt-6 text-center">
-                    <p class="text-sm text-gray-600">Não tem uma conta? <a href="#" class="text-indigo-600 hover:underline">Registre-se</a></p>
+                    <p class="text-sm text-gray-600">{% translate 'Não tem uma conta?'%} <a href="#" class="text-indigo-600 hover:underline">{% translate 'Registre-se'%}</a></p>
                 </div>
-
-                <button
-                hx-get="/test/"
-                hx-target="#response-container"
-                hx-swap="innerHTML"
-                >
-                   Clica
-            </button>
-            
-                <!-- Container para exibir a resposta -->
-                <div id="response-container"></div>
             </div>
         </main>
     </div>
 </body>
+<script type="text/hyperscript">
+    js 
+    async function login(email, password) {
+        const body = {
+          email: email,
+          password: password
+        };
+        const response = await fetch('{% url 'api-1.0.0:create_access_token'%}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/json'
+            },
+            body: new URLSearchParams(body).toString()
+        });
+        return await response;
+      }
+    end 
+    def setAuthToken()
+        if value of #password is empty or value of #email is empty 
+            logMessage('{% translate 'Preencha os campos abaixo.'%}')
+        else 
+            call login(value of #email, value of #password) then
+            if it.status != 200
+                logMessage('{% translate 'Email ou senha inválidos.' %}')
+            else
+                set response to it.json()
+                set acessToken to response.token_type + " " + response.access_token
+                localStorage.setItem("acessToken", acessToken)
+                go to url '/'
+            end
+        end
+    end
+    def logMessage(message)
+        remove .hidden from #error-messages then put message into #error-messages
+        wait 7s then add .hidden to #error-messages 
+    end
+</script>
 </html>

@@ -297,7 +297,7 @@ class TestCard:
         )
         payload['cardset_id'] = cardset.id
         payload['expression'] = 'not'
-        payload['language'] = Language.PORTUGUESE
+        payload['language'] = Language.PORTUGUESE_BRASILIAN
 
         response = client.post(
             self.create_card_route,

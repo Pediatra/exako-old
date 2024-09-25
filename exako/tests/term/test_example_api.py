@@ -633,10 +633,10 @@ def test_create_term_example_translation_term_lexical_with_value_ref(
 def test_create_term_example_translation_invalid_same_language_term_example(
     client, generate_payload, token_header
 ):
-    example = TermExampleFactory(language=Language.PORTUGUESE)
+    example = TermExampleFactory(language=Language.PORTUGUESE_BRASILIAN)
     payload = generate_payload(
         TermExampleTranslationFactory,
-        language=Language.PORTUGUESE,
+        language=Language.PORTUGUESE_BRASILIAN,
     )
     payload.update(
         term=TermFactory(language=Language.CHINESE).id,
@@ -708,7 +708,7 @@ def test_create_term_example_translation_invalid_same_language(
 def test_create_term_example_translation_language_invalid_reference(
     client, generate_payload, token_header, link_factory, link_name, language_ref
 ):
-    link_model = link_factory(**{language_ref: Language.PORTUGUESE})
+    link_model = link_factory(**{language_ref: Language.PORTUGUESE_BRASILIAN})
     example = TermExampleFactory(language=Language.CHINESE)
     payload = generate_payload(
         TermExampleTranslationFactory,

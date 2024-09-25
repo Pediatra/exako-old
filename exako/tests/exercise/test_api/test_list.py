@@ -76,13 +76,13 @@ parametrize_exercies = pytest.mark.parametrize(
 @pytest.mark.parametrize(
     'language',
     [
-        [Language.PORTUGUESE],
-        [Language.PORTUGUESE, Language.CHINESE, Language.JAPANESE],
+        [Language.PORTUGUESE_BRASILIAN],
+        [Language.PORTUGUESE_BRASILIAN, Language.CHINESE, Language.JAPANESE],
     ],
 )
 def test_list_exercise(client, token_header, exercise_factory, language):
     exercises = [exercise_factory(language=choice(language)) for _ in range(10)]
-    exercise_factory.create_batch(language=Language.ENGLISH, size=5)
+    exercise_factory.create_batch(language=Language.ENGLISH_USA, size=5)
 
     response = client.get(
         list_exercise_router(language=language),
@@ -309,16 +309,17 @@ def test_list_exercise(client, token_header, exercise_factory, language):
 def test_list_exercise_filter_exercise_type(client, token_header, factories):
     *exercise_factories, exercise_distractor_factory, count = factories
     exercises = [
-        factory(language=Language.PORTUGUESE) for factory in exercise_factories
+        factory(language=Language.PORTUGUESE_BRASILIAN)
+        for factory in exercise_factories
     ]
     exercise_distractor_factory.create_batch(
         size=5,
-        language=Language.PORTUGUESE,
+        language=Language.PORTUGUESE_BRASILIAN,
     )
 
     response = client.get(
         list_exercise_router(
-            language=Language.PORTUGUESE,
+            language=Language.PORTUGUESE_BRASILIAN,
             exercise_type=[exercise.type for exercise in exercises],
         ),
         headers=token_header,
@@ -341,8 +342,12 @@ def test_list_exercise_filter_exercise_type(client, token_header, factories):
     ],
 )
 def test_list_exercise_filter_level(client, token_header, exercise_factory, level):
-    exercises1 = exercise_factory.create_batch(size=10, language=Language.PORTUGUESE)
-    exercises2 = exercise_factory.create_batch(size=5, language=Language.PORTUGUESE)
+    exercises1 = exercise_factory.create_batch(
+        size=10, language=Language.PORTUGUESE_BRASILIAN
+    )
+    exercises2 = exercise_factory.create_batch(
+        size=5, language=Language.PORTUGUESE_BRASILIAN
+    )
     ExerciseLevel.objects.all().delete()
     [
         ExerciseLevel.objects.get_or_create(exercise=exercise, level=choice(level))
@@ -354,7 +359,7 @@ def test_list_exercise_filter_level(client, token_header, exercise_factory, leve
     ]
 
     response = client.get(
-        list_exercise_router(language=Language.PORTUGUESE, level=level),
+        list_exercise_router(language=Language.PORTUGUESE_BRASILIAN, level=level),
         headers=token_header,
     )
 
@@ -381,7 +386,7 @@ def test_list_exercise_filter_level(client, token_header, exercise_factory, leve
 def test_list_exercise_filter_cardset(client, user, token_header, exercise_factory):
     exercises_card = exercise_factory.create_batch(
         size=5,
-        language=Language.PORTUGUESE,
+        language=Language.PORTUGUESE_BRASILIAN,
     )
     cardset = CardSetFactory(user=user)
     [
@@ -391,11 +396,13 @@ def test_list_exercise_filter_cardset(client, user, token_header, exercise_facto
         )
         for exercise in exercises_card
     ]
-    exercises = exercise_factory.create_batch(size=5, language=Language.PORTUGUESE)
+    exercises = exercise_factory.create_batch(
+        size=5, language=Language.PORTUGUESE_BRASILIAN
+    )
 
     response = client.get(
         list_exercise_router(
-            language=Language.PORTUGUESE,
+            language=Language.PORTUGUESE_BRASILIAN,
             cardset_id=cardset.id,
         ),
         headers=token_header,
@@ -431,7 +438,7 @@ def test_list_exercise_filter_cardset_term_lexical_value(
 ):
     exercises_card = exercise_factory.create_batch(
         size=5,
-        language=Language.PORTUGUESE,
+        language=Language.PORTUGUESE_BRASILIAN,
     )
     cardset = CardSetFactory(user=user)
     [
@@ -441,11 +448,13 @@ def test_list_exercise_filter_cardset_term_lexical_value(
         )
         for exercise in exercises_card
     ]
-    exercises = exercise_factory.create_batch(size=5, language=Language.PORTUGUESE)
+    exercises = exercise_factory.create_batch(
+        size=5, language=Language.PORTUGUESE_BRASILIAN
+    )
 
     response = client.get(
         list_exercise_router(
-            language=Language.PORTUGUESE,
+            language=Language.PORTUGUESE_BRASILIAN,
             cardset_id=cardset.id,
         ),
         headers=token_header,
@@ -481,7 +490,7 @@ def test_list_exercise_filter_cardset_term_lexical_term_ref(
 ):
     exercises_card = exercise_factory.create_batch(
         size=5,
-        language=Language.PORTUGUESE,
+        language=Language.PORTUGUESE_BRASILIAN,
     )
     cardset = CardSetFactory(user=user)
     [
@@ -491,11 +500,13 @@ def test_list_exercise_filter_cardset_term_lexical_term_ref(
         )
         for exercise in exercises_card
     ]
-    exercises = exercise_factory.create_batch(size=5, language=Language.PORTUGUESE)
+    exercises = exercise_factory.create_batch(
+        size=5, language=Language.PORTUGUESE_BRASILIAN
+    )
 
     response = client.get(
         list_exercise_router(
-            language=Language.PORTUGUESE,
+            language=Language.PORTUGUESE_BRASILIAN,
             cardset_id=cardset.id,
         ),
         headers=token_header,
@@ -522,13 +533,13 @@ def test_list_exercise_filter_cardset_term_lexical_term_ref(
 def test_list_exercise_filter_seed(client, token_header, exercise_factory):
     exercises = exercise_factory.create_batch(
         size=5,
-        language=Language.PORTUGUESE,
+        language=Language.PORTUGUESE_BRASILIAN,
     )
     seed = random()
 
     response = client.get(
         list_exercise_router(
-            language=Language.PORTUGUESE,
+            language=Language.PORTUGUESE_BRASILIAN,
             exercise_type=exercises[0].type,
             seed=seed,
         ),
@@ -537,7 +548,7 @@ def test_list_exercise_filter_seed(client, token_header, exercise_factory):
 
     response2 = client.get(
         list_exercise_router(
-            language=Language.PORTUGUESE,
+            language=Language.PORTUGUESE_BRASILIAN,
             exercise_type=exercises[0].type,
             seed=seed,
         ),

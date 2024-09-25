@@ -38,8 +38,8 @@ def search_term_route(expression, language):
     )
 
 
-def search_meaning_route(expression, language, translation_language):
-    url = str(reverse_lazy('api-1.0.0:search_meaning'))
+def search_reverse_route(expression, language, translation_language):
+    url = str(reverse_lazy('api-1.0.0:search_reverse'))
     return set_url_params(
         url,
         expression=expression,
@@ -136,7 +136,7 @@ def test_get_term_lexical(client):
 
 
 def test_get_term_not_found(client):
-    response = client.get(get_term_route('expression', Language.PORTUGUESE))
+    response = client.get(get_term_route('expression', Language.PORTUGUESE_BRASILIAN))
 
     assert response.status_code == 404
 
@@ -190,19 +190,21 @@ def test_search_term_lexical(client):
 def test_search_term_empty(client):
     TermFactory.create_batch(size=5)
 
-    response = client.get(search_term_route('aqubermassi acaoq', Language.PORTUGUESE))
+    response = client.get(
+        search_term_route('aqubermassi acaoq', Language.PORTUGUESE_BRASILIAN)
+    )
 
     assert response.status_code == 200
     assert len(response.json()['items']) == 0
 
 
-def test_search_meaning(client):
+def test_search_reverse(client):
     term_definition_translation = TermDefinitionTranslationFactory(
         meaning='ãQübérmäßíg âçãoQã'
     )
 
     response = client.get(
-        search_meaning_route(
+        search_reverse_route(
             'aqubermassi acaoq',
             term_definition_translation.term_definition.term.language,
             term_definition_translation.language,
@@ -216,14 +218,14 @@ def test_search_meaning(client):
     ]
 
 
-def test_search_meaning_empty(client):
+def test_search_reverse_empty(client):
     TermFactory.create_batch(size=5)
 
     response = client.get(
-        search_meaning_route(
+        search_reverse_route(
             'aqubermassi acaoq',
-            Language.PORTUGUESE,
-            Language.ENGLISH,
+            Language.PORTUGUESE_BRASILIAN,
+            Language.ENGLISH_USA,
         )
     )
 
@@ -233,11 +235,11 @@ def test_search_meaning_empty(client):
 
 def test_term_index(client):
     terms = [
-        TermFactory(expression=f'a - {n}', language=Language.PORTUGUESE)
+        TermFactory(expression=f'a - {n}', language=Language.PORTUGUESE_BRASILIAN)
         for n in range(5)
     ]
 
-    response = client.get(term_index_route('A', Language.PORTUGUESE))
+    response = client.get(term_index_route('A', Language.PORTUGUESE_BRASILIAN))
 
     assert response.status_code == 200
     assert [TermView.from_orm(term) for term in terms] == [

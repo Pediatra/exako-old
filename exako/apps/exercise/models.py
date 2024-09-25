@@ -42,10 +42,11 @@ class ExerciseManager(CustomManager):
             queryset = queryset.filter(type__in=exercise_type)
 
         if level:
-            level_query = ExerciseLevel.objects.filter(level__in=level).values(
-                'exercise_id'
+            queryset = queryset.filter(
+                id__in=ExerciseLevel.objects.filter(level__in=level).values(
+                    'exercise_id'
+                )
             )
-            queryset = queryset.filter(id__in=level_query)
 
         if cardset_id:
             cardset_query = Card.objects.filter(

@@ -30,8 +30,8 @@ class PartOfSpeech(IntegerChoices):
 
 
 class Language(TextChoices):
-    PORTUGUESE = 'pt', _('Portuguese')
-    ENGLISH = 'en', _('English')
+    PORTUGUESE_BRASILIAN = 'pt-BR', _('Portuguese Brazil')
+    ENGLISH_USA = 'en-US', _('English USA')
     DEUTSCH = 'de', _('Deutsch')
     FRENCH = 'fr', _('French')
     SPANISH = 'es', _('Spanish')
@@ -39,6 +39,31 @@ class Language(TextChoices):
     CHINESE = 'zh', _('Chinese')
     JAPANESE = 'ja', _('Japanese')
     RUSSIAN = 'ru', _('Russian')
+
+
+language_emoji_map = {
+    Language.PORTUGUESE_BRASILIAN: '🇧🇷',
+    Language.ENGLISH_USA: '🇺🇸',
+    Language.DEUTSCH: '🇩🇪',
+    Language.FRENCH: '🇫🇷',
+    Language.SPANISH: '🇪🇸',
+    Language.ITALIAN: '🇮🇹',
+    Language.CHINESE: '🇨🇳',
+    Language.JAPANESE: '🇯🇵',
+    Language.RUSSIAN: '🇷🇺',
+}
+
+language_alphabet_map = {
+    Language.PORTUGUESE_BRASILIAN: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    Language.ENGLISH_USA: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    Language.DEUTSCH: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜß',
+    Language.FRENCH: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÆÇÉÈÊËÎÏÔŒÙÛÜŸ',
+    Language.SPANISH: 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ',
+    Language.ITALIAN: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    Language.CHINESE: '阿贝色德饿佛日哈伊鸡卡勒马娜哦佩苦耳斯特乌维独埃克斯伊格黑克',
+    Language.JAPANESE: 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん',
+    Language.RUSSIAN: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
+}
 
 
 class TermLexicalType(IntegerChoices):

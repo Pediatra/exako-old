@@ -1,0 +1,11 @@
+<div class="p-4 rounded-lg bg-gray-50">
+    <h3 class="font-semibold text-lg mb-2 text-indigo-700">{{ lexical_type.label }}</h3>
+    <div class="flex flex-wrap gap-2">
+        {% for term_lexical in term_lexicals %}
+        <a href="{% url "term:view" language=term.language %}{% if term_lexical.term_value_ref %}?expression={{ term_lexical.term_value_ref.expression }}{% else %}?expression={{ term.expression }}&lexical={{ term_lexical.value }}{% endif %}"
+         class="bg-indigo-100 text-indigo-800 text-sm font-medium p-1 px-1.5 rounded-lg">
+         {% if term_lexical.term_value_ref %} {{ term_lexical.term_value_ref.expression }} {% else %} {{ term_lexical.value }} {% endif%}
+        </a> 
+        {% endfor %}  
+    </div>
+</div>

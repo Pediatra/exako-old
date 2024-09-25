@@ -11,7 +11,7 @@ strong {
 {% block content%}
     <header class="mb-8 flex justify-between items-center">
         <div>
-            <h1 class="text-5xl font-bold text-indigo-800 mb-2">{{ term.expression | title}}</h1>
+            <h1 class="text-5xl font-bold text-indigo-800 mb-2">{{ term_lexical.value | title}}</h1>
             <div class="flex items-center space-x-4">
                 <audio id="audio" src="{{ term_pronunciation.audio_file }}"></audio>
                 <button class="text-indigo-800 p-2 transition duration-300 flex items-center" _="on click audio.play()">
@@ -70,74 +70,16 @@ strong {
 
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-2xl font-bold mb-4 text-indigo-800">Exemplos</h2>
-            <div hx-get="{% url 'term:term_examples' language=term.language %}?term={{ term.id }}" hx-trigger="load" id="examples-container" class="space-y-4">
+            <div hx-get="{% url 'term:term_examples' language=term.language %}?term_lexical={{ term_lexical.id }}" hx-trigger="load" id="examples-container" class="space-y-4">
             </div> 
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-2xl font-bold mb-4 text-indigo-800">Informações Léxicas</h2>
-            <div class="mb-4">
-                <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg" id="synonyms-tab" _="on click call selectLexicalTab('synonyms-tab')">Sinônimos</button>
-                    </li>
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg" id="antonyms-tab" _="on click call selectLexicalTab('antonyms-tab')">Antônimos</button>
-                    </li>
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg" id="inflection-tab" _="on click call selectLexicalTab('inflection-tab')">Inflexões</button>
-                    </li>
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg" id="idioms-tab" _="on click call selectLexicalTab('idioms-tab')">Expressões</button>
-                    </li>
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg" id="rhymes-tab" _="on click call selectLexicalTab('rhymes-tab')">Rimas</button>
-                    </li>
-                </ul>
-            </div>
-            <div id="leixcal-content">
-            </div>
-        </div>
-    </div>
-
-    <div>
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-2xl font-bold mb-4 text-indigo-800">Imagem</h2>
-            <div class="flex justify-center">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/27/Square_200x200.svg" alt="" class="border-4', 'border-indigo-600">
-            </div>
-        </div>
     </div>
 {% endblock %}
 
 {% block script %}
 <script type="text/hyperscript">
     init changeMenuSelection('menu-explore') end
-
-    def selectLexicalTab(id)
-        set activeClasses to ['text-blue-600', 'hover:text-blue-600', 'border-blue-600']
-        set inactiveClasses to ['text-gray-500', 'hover:text-gray-600', 'border-gray-100', 'hover:border-gray-300']
-        set tabs to ['synonyms-tab', 'antonyms-tab', 'inflection-tab', 'idioms-tab', 'rhymes-tab']
-        set types to {'synonyms-tab': 0, 'antonyms-tab': 1, 'inflection-tab': 2, 'idioms-tab': 3, 'rhymes-tab': 4}
-        for tab in tabs
-            if tab != id
-                for inactive in inactiveClasses
-                    add .{inactive} to #{tab}
-                end
-                for active in activeClasses
-                    remove .{active} from #{tab}
-                end
-            end
-        end
-        for inactive in inactiveClasses
-            remove .{inactive} from #{id}
-        end
-        for active in activeClasses
-            add .{active} to #{id}
-        end
-        fetch `{% url 'term:term_lexicals' term_id=term.id %}?lexical_type=${types[id]}` put the result into #leixcal-content
-    end
-    init selectLexicalTab('synonyms-tab') end
 
     def translateContent(type)
         set language to value of #language-select
@@ -149,20 +91,20 @@ strong {
             end
         end
         if language == 'not-selected' exit end
-        set divs to document.querySelectorAll(`p[id^="${type}-"]`)
         set contentIds to []
-        for div in divs
+        for div in document.querySelectorAll(`p[id^="${type}-"]`)
             append div.id.split('-')[1] to contentIds
         end
         for contentId in contentIds
             set targetElement to document.getElementById(`translation-${type}-${contentId}`)
             if targetElement@ignore == 'false'
-                fetch `/api/term/${type}/translation/${contentId}/${language}` as response then
+                async fetch `/api/term/${type}/translation/${contentId}/${language}` as response then
                     if it.status == 200
                         set response to it.json()
                         set targetElement.innerHTML to response.translation
                     end
-                    set targetElement@ignore to 'true'
+                end
+                set targetElement@ignore to 'true'
             end
         end
     end

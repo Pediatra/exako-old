@@ -1,0 +1,17 @@
+{% load term_tags %}
+
+{% if page.object_list %}
+{% for term_example_link in page.object_list %}
+<div class="p-2 bg-gray-50 rounded-lg">
+    <p id="example-{{ term_example_link.term_example.id }}" class="text-lg mb-1">{{ term_example_link.term_example.example|highlight_sentence:term_example_link.highlight|term_reference:language  }}</p>
+    <p id="translation-example-{{ term_example_link.term_example.id }}" class="text-md text-gray-600 italic"></p>
+</div>
+{% endfor %}
+{% if page.has_next %}
+<div _="on click from #example-button wait for htmx:afterOnLoad then remove me then call translateExamples()" class="mt-6 text-center">
+    <button id="example-button"  hx-get="{{ next_url }}&page={{ page.next_page_number }}" hx-target="#examples-container" hx-swap="beforeend" class="inline-flex items-center justify-center w-8 h-8 border border-gray-300 rounded-full text-gray-500 hover:text-indigo-600 hover:border-gray-600 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">
+        <i class="fa-solid fa-chevron-down"></i>
+    </button>
+</div>
+{% endif %}
+{% endif %}

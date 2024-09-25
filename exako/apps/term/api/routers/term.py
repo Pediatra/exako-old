@@ -1,4 +1,3 @@
-from django.db import models
 from django.shortcuts import get_object_or_404
 from ninja import Query, Router
 from ninja.errors import HttpError
@@ -14,7 +13,7 @@ from exako.apps.term.api.routers.example import example_router
 from exako.apps.term.api.routers.image import image_router
 from exako.apps.term.api.routers.lexical import lexical_router
 from exako.apps.term.api.routers.pronunciation import pronunciation_router
-from exako.apps.term.models import Term, TermDefinitionTranslation, TermLexical
+from exako.apps.term.models import Term
 from exako.apps.user.auth.token import AuthBearer
 
 term_router = Router(tags=['Termo'])
@@ -108,21 +107,7 @@ def search_term(
     expression: str,
     language: constants.Language,
 ):
-    return Term.objects.filter(
-        models.Q(
-            expression__ct_similarity=expression,
-            language=language,
-        )
-        | models.Q(
-            id__in=models.Subquery(
-                TermLexical.objects.filter(
-                    type=constants.TermLexicalType.INFLECTION,
-                    value__ct_similarity=expression,
-                    term__language=models.OuterRef('language'),
-                ).values_list('term_id', flat=True)
-            ),
-        ),
-    )
+    return Term.objects.search(expression=expression, language=language)
 
 
 @term_router.get(
@@ -132,20 +117,16 @@ def search_term(
     description='Endpoint utilizado para procurar um termo, palavra ou expressão de um certo idioma pelo seu significado na linguagem de tradução e termo especificados.',
 )
 @paginate(PageNumberPagination)
-def search_meaning(
+def search_reverse(
     request,
     expression: str,
     language: constants.Language,
     translation_language: constants.Language,
 ):
-    return Term.objects.filter(
-        id__in=models.Subquery(
-            TermDefinitionTranslation.objects.filter(
-                term_definition__term__language=language,
-                meaning__ct_similarity=expression,
-                language=translation_language,
-            ).values('term_definition__term_id')
-        )
+    return Term.objects.search_reverse(
+        expression=expression,
+        language=language,
+        translation_language=translation_language,
     )
 
 

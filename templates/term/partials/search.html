@@ -1,0 +1,24 @@
+{% load i18n %}
+
+{% if page.object_list %}
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
+      {% for expression in page.object_list%}
+      <div class="bg-indigo-100 rounded-lg p-3 text-center hover:bg-indigo-200 transition duration-300 cursor-pointer">
+        <span class="text-indigo-700 font-medium">{{ expression }}</span>
+      </div>
+      {% endfor %}
+  </div>
+  <div class="flex justify-between items-center mt-6">
+      <button id="prev-page" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed" {% if page.has_previous %} hx-get="{{ prev_url }}&page={{ page.previous_page_number }}" hx-target="{{ target }}" {% else %} disabled {% endif %}>
+        {% translate 'Anterior' %}
+      </button>
+      <span id="page-info" class="text-gray-600">{{ Página }} <span id="current-page">{{ page.number }}</span> de <span id="total-pages">{{ page_count }}</span></span>
+      <button id="next-page" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed" {% if page.has_next %}  hx-get="{{ next_url }}&page={{ page.next_page_number }}" hx-target="{{ target }}" {% else %} disabled {% endif %}>
+        {% translate 'Próxima' %}
+      </button>
+  </div>
+{% else %}
+  <div class="bg-yellow-100 rounded-lg p-4 mb-4">
+    <p class="text-yellow-700">{% translate 'Nenhum resultado encontrado para o termo pesquisado. Por favor, tente outra palavra-chave ou verifique a ortografia.' %}</p>
+  </div>
+{% endif %}

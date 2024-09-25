@@ -228,10 +228,6 @@ class TermExampleTranslationView(Schema):
     translation: str = Field(
         examples=['Ontem eu almoçei na casa da minha mãe.'],
     )
-    highlight: list[list[int]] = Field(
-        examples=[[[4, 8], [11, 16]]],
-        description='Highlighted positions in the given translation sentence where the term appears.',
-    )
     additional_content: dict | None = Field(
         default=None,
         examples=[{'syllable': ['ca', 'sa'], 'part': 'en'}],
@@ -246,10 +242,6 @@ class TermExampleTranslationSchema(
     language: constants.Language
     translation: str = Field(
         examples=['Ontem eu almoçei na casa da minha mãe.'],
-    )
-    highlight: list[list[int]] = Field(
-        examples=[[[4, 8], [11, 16]]],
-        description='Highlighted positions in the given translation sentence where the term appears.',
     )
     additional_content: dict | None = Field(
         default=None,

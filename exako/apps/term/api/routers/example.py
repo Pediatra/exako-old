@@ -14,7 +14,6 @@ from exako.apps.term.models import (
     TermExample,
     TermExampleLink,
     TermExampleTranslation,
-    TermExampleTranslationLink,
 )
 from exako.apps.user.auth.token import AuthBearer
 
@@ -153,13 +152,6 @@ def create_example_translation(
         ),
     )
 
-    TermExampleTranslationLink.objects.create(
-        **translation_schema.model_dump(
-            exclude={'translation', 'additional_content'},
-            exclude_none=True,
-        ),
-    )
-
     return 201, {
         **model_to_dict(translation),
         'highlight': translation_schema.highlight,
@@ -216,21 +208,9 @@ def get_example_translation(
     request,
     term_example: int,
     language: constants.Language,
-    example_link_schema: schema.TermExampleLinkSchema = Query(),
 ):
     return get_object_or_404(
-        TermExampleTranslation.objects.filter(
-            term_example_id=term_example,
-            language=language,
-        ).annotate(
-            highlight=Subquery(
-                TermExampleTranslationLink.objects.select_related('term')
-                .filter(
-                    example_link_schema.get_filter_expression(),
-                    term_example_id=OuterRef('term_example_id'),
-                    language=language,
-                )
-                .values('highlight')
-            )
-        )
+        TermExampleTranslation,
+        term_example_id=term_example,
+        language=language,
     )
