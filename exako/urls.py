@@ -35,6 +35,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls),
     path('', include('exako.apps.term.urls')),
+    path('cardset/', include('exako.apps.card.urls')),
     path('auth/', include('exako.apps.user.urls')),
 ]
 

@@ -44,6 +44,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'exako.apps.core.middleware.ThreadLocalMiddleware',
 ]
 
 ROOT_URLCONF = 'exako.urls'

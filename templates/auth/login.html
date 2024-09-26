@@ -89,7 +89,7 @@
             else
                 set response to it.json()
                 set acessToken to response.token_type + " " + response.access_token
-                localStorage.setItem("acessToken", acessToken)
+                localStorage.setItem("accessToken", acessToken)
                 go to url '/'
             end
         end

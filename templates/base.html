@@ -40,12 +40,12 @@
         <aside class="w-16 md:w-64 lg:w-80 bg-gray-800 text-white p-2 md:p-6 fixed h-full overflow-y-auto transition-all duration-300 ease-in-out">
             <ul class="pt-6 space-y-6">
                 <li>
-                    <a id="menu-deck" href="#" class="block py-3 px-2 md:px-6 rounded hover:bg-indigo-700 transition duration-300 flex items-center text-sm md:text-lg">
-                        <i class="fas fa-layer-group mr-0 md:mr-3"></i> <span class="hidden md:inline">Meus Decks</span>
+                    <a id="menu-deck" href="{% url 'card:cardset_home' %}" class="block py-3 px-2 md:px-6 rounded hover:bg-indigo-700 transition duration-300 flex items-center text-sm md:text-lg">
+                        <i class="fas fa-layer-group mr-0 md:mr-3"></i> <span class="hidden md:inline">Flashcards</span>
                     </a>
                 </li>
                 <li>
-                    <a id="menu-explore" href="#" class="block py-3 px-2 md:px-6 hover:bg-indigo-600 rounded transition duration-300 flex items-center text-sm md:text-lg">
+                    <a id="menu-explore" href="{% url 'term:home' %}" class="block py-3 px-2 md:px-6 hover:bg-indigo-600 rounded transition duration-300 flex items-center text-sm md:text-lg">
                         <i class="fas fa-compass mr-0 md:mr-3"></i> <span class="hidden md:inline">Explorar</span>
                     </a>
                 </li>
@@ -59,18 +59,25 @@
 
         <!-- Main Content -->
         <main class="flex-1 ml-16 md:ml-64 lg:ml-80 p-4 md:p-8">
-            <div class="w-full max-w-6xl mx-auto">
+            <div id="main-content" class="w-full max-w-7xl mx-auto">
                 {% block content %}{% endblock %}
             </div>
         </main>
     </div>
-
-{% block script %}{% endblock %}
 
 <script type="text/hyperscript">
     def changeMenuSelection(id)
         add .bg-indigo-600 to #{id}
     end
 </script>
+<script>
+    htmx.on("htmx:configRequest", (event)=> {
+        event.detail.headers["Authorization"] = localStorage.getItem('accessToken');
+      })
+    document.body.addEventListener('fetch:beforeRequest', (event) => {
+        event.detail.headers["Authorization"] = localStorage.getItem('accessToken');
+    });
+</script>
+{% block script %}{% endblock %}
 </body>
 </html>

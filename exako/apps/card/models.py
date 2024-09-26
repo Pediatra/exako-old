@@ -1,22 +1,24 @@
 from django.db import models
 
+from exako.apps.core.models import UserBase
 from exako.apps.term.constants import Language
 from exako.apps.term.models import Term
-from exako.apps.user.models import User
 
 
-class CardSet(models.Model):
+class CardSet(UserBase):
     name = models.CharField(max_length=255)
-    description = models.TextField(null=True, blank=True)
-    created_at = models.DateField(auto_now_add=True)
-    last_review = models.DateField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_review = models.DateTimeField(auto_now=True)
+    pinned = models.BooleanField(default=False)
     language = models.CharField(
         max_length=50,
         choices=Language.choices,
         null=True,
         blank=True,
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def get_language_label(self):
+        return Language(str(self.language)).label
 
     class Meta:
         db_table = 'card_set'

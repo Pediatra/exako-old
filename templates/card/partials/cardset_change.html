@@ -1,0 +1,29 @@
+{% load i18n %}
+
+<div class="bg-white rounded-lg shadow-md p-8">
+    <h2 class="text-3xl font-bold text-center mb-6 text-indigo-600">{% translate 'Criar deck' %}</h2>
+    <form hx-post="{{ post_url }}" hx-trigger="submit" hx-target="#main-content">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        {% for field in form %}
+            <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="{{ field.label_attrs.class }}">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <p class="text-red-500 text-xs italic mt-1">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-300">
+            {% translate 'Salvar' %}
+        </button>
+    </form>
+</div>

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block style %}
+.card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6 text-indigo-800">{% translate 'Meus cardsets' %} </h1>
+
+<div class="mb-6">
+    <input name="name" type="text" placeholder="{% translate 'Pesquisar cardset...' %}" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"  
+    hx-get="{% url 'card:list_cardset' %}" 
+    hx-trigger="input changed delay:500ms, search" 
+    hx-target="#cardset-content" >
+</div>
+
+<div id="cardset-content" class="grid grid-cols-3 gap-6" hx-get="{% url 'card:list_cardset' %}" hx-trigger="load delay:100ms">
+</div>
+
+<button hx-get="{% url 'card:create_cardset' %}" hx-target="#main-content" class="fixed bottom-8 right-8 bg-indigo-600 text-white rounded-full w-12 h-12 shadow-lg hover:bg-indigo-700 transition duration-300">
+    <i class="fas fa-plus text-2xl"></i>
+</button>
+{% endblock %}
+
+{% block script %}
+<script type="text/hyperscript">
+    init changeMenuSelection('menu-deck') end
+</script>
+{% endblock%}

@@ -1,0 +1,103 @@
+{% load i18n %}
+
+<div class="mb-12">
+    <div class="flex justify-between items-center mb-2">
+        <span class="text-sm font-medium text-gray-600">{% translate 'Progresso:' %} {{page.number }}/{{ page_count }}</span>
+        <span class="text-sm font-medium text-gray-600">{{ percentage }}% {% translate 'Concluído' %}</span>
+    </div>
+    <div class="relative">
+        <div class="absolute inset-0 bg-gray-200 h-2.5 rounded-full">
+            <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ percentage }}%;"></div>
+        </div>
+    </div>
+</div>
+
+<div _="init fetch {% url 'api-1.0.0:update_cardset' cardset_id=cardset.id %} with method:'PATCH',body:{} as JSON" class="flex items-center justify-center mt-12 mb-4">
+    <button id="prev-card" class="nav-button flex items-center disabled:opacity-50 disabled:cursor-not-allowed" {% if page.has_previous %} hx-get="{% url 'card:card_view' cardset_id=cardset.id %}?page={{ page.previous_page_number }}" hx-target="#card-content" {% else%} disabled {% endif %}>
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <div class="card-container w-full max-w-2xl mx-8 flex justify-center cursor-pointer">
+        <div id="flashcard" class="card" _="on click toggle .flip">
+            <div class="card-face card-front">
+                <p class="text-2xl font-semibold">{{ card.term.expression }}</p>
+            </div>
+            <div class="card-face card-back">
+                <p class="text-xl break-all">
+                    {{ card.note }}
+                </p>
+            </div>
+        </div>
+    </div>
+    <button id="next-card" class="nav-button flex items-center disabled:opacity-50 disabled:cursor-not-allowed" {% if page.has_next %}  hx-get="{% url 'card:card_view' cardset_id=cardset.id %}?page={{ page.next_page_number }}" hx-target="#card-content" {% else %} disabled {% endif %}>
+        <i class="fas fa-chevron-right"></i>
+    </button>
+</div>
+
+<div class="flex justify-center items-center space-x-4 mt-8 mb-4">
+    <button hx-get="{% url 'card:add_cardset' cardset_id=cardset.id %}" hx-target="#main-content" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition duration-300 flex items-center gap-x-2">
+        <i class="fas fa-plus"></i> 
+    </button>
+    <button hx-get="{% url 'card:card_update' cardset_id=cardset.id card_id=card.id %}" hx-target="#main-content" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-300 flex items-center gap-x-2">
+        <i class="fas fa-edit"></i>
+    </button>
+    <button _="
+        on click call window.confirm('{% translate 'Você tem certeza que deseja excluir esse cartão?' %}') then set response to it
+        if response == true
+            fetch {% url 'api-1.0.0:delete_card' card_id=card.id %} with method:'DELETE' then
+            go to url '{% url 'card:cardset_view' cardset_id=cardset.id %}'
+        end
+    " 
+    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition duration-300 flex items-center gap-x-2">
+        <i class="fas fa-trash-alt"></i>
+    </button>
+</div>
+
+
+<div class="w-full bg-white p-4 shadow-md rounded-lg">
+    <div id="card-list-container" class="flex overflow-x-auto space-x-4 pb-4" style="scroll-behavior: smooth;"
+         _="on load call centerCard('card-{{ card.id }}') end
+            on wheel
+              set scrollAmount to event.deltaY * 2
+              set my.scrollLeft to my.scrollLeft + scrollAmount
+            end
+           ">
+      {% for list_card in cards %}
+        <div hx-get="{% url 'card:card_view' cardset_id=cardset.id %}?page={{ forloop.counter }}" hx-target="#card-content" hx-on="click[this] if event.target.closest('button') == null" id="card-{{ list_card.id }}" class="cursor-pointer flex-shrink-0 w-32 h-20 bg-gray-100 rounded-md shadow-sm flex flex-col justify-between p-2 {% if list_card.id == card.id %} bg-indigo-200 {% endif %}">
+          <div class="text-center text-sm font-medium truncate mt-3">{{ list_card.term.expression }}</div>
+          <div class="flex justify-end space-x-1">
+            <button hx-get="{% url 'card:card_update' cardset_id=cardset.id card_id=list_card.id %}" hx-target="#main-content" class="text-gray-500 hover:text-indigo-600" >
+                <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="event.stopPropagation();" _="
+                on click call window.confirm('{% translate 'Você tem certeza que deseja excluir esse cartão?' %}') then set response to it
+                if response == true
+                    fetch {% url 'api-1.0.0:delete_card' card_id=list_card.id %} with method:'DELETE' then
+                    go to url '{% url 'card:cardset_view' cardset_id=cardset.id %}'
+                end
+                "  
+                class="text-gray-500 hover:text-red-600"
+            >
+                <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  
+<script type="text/hyperscript">
+    def centerCard(cardId)
+      set cardContainer to document.getElementById('card-list-container')
+      set card to document.getElementById(cardId)
+      if card is not null
+        set containerCenter to cardContainer.clientWidth
+        set cardWidth to card.offsetWidth 
+        set cardOffsetLeft to card.offsetLeft
+        set scrollPosition to cardOffsetLeft - (containerCenter - cardWidth)
+        cardContainer.scrollTo({
+          left: scrollPosition,
+          behavior: 'instant'
+        })
+      end
+    end
+</script>

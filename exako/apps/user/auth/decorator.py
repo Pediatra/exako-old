@@ -16,9 +16,7 @@ def login_required(func=None, auth=AuthBearer()):
             except InvalidToken:
                 response = HttpResponse()
                 response.status_code = 302
-                response.headers['HX-Redirect'] = (
-                    settings.LOGIN_URL + '?next=' + request.path
-                )
+                response.headers['HX-Redirect'] = settings.LOGIN_URL
                 return response
             return f(request, *args, **kwargs)
 

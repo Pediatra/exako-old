@@ -33,6 +33,7 @@ class CardSetSchemaUpdate(Schema):
         default=None, examples=['Um cartão sobre palavras novas.']
     )
     language: Language | None = None
+    pinned: bool | None = None
 
 
 class CardSchema(Schema):
