@@ -1,0 +1,36 @@
+<section class="bg-white rounded-lg shadow-md p-8 mb-8" _="install ExerciseOptions">
+    <h2 class="text-3xl font-bold mb-6 text-indigo-800 text-center">Iniciar Sequência de Exercícios</h2>
+    <div class="grid grid-cols-2 gap-6">
+        {% for name, option in options.items %}
+        <div class="multiple-select relative" 
+             _="on click call toggleDropdown(me) end">
+            <button class="dropdown-button w-full bg-white border border-gray-300 rounded-md py-2 px-4 text-left focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <span alt="{{ option.alt_text }}" class="selected-items">{{ option.alt_text }}</span>
+                <i class="w-5 h-5 ml-2 -mr-1 absolute right-2 top-3 fa-solid fa-chevron-down"></i>
+            </button>
+            <div class="dropdown-menu absolute z-10 w-full bg-white shadow-lg mt-1 rounded-md hidden">
+                <div class="p-2">
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" class="select-all form-checkbox h-5 w-5 text-blue-600"
+                               _="on change call toggleAll(me) then halt">
+                        <span class="ml-2 text-gray-700">Selecionar todos</span>
+                    </label>
+                    <hr class="my-2">
+                    {% for value, label in option.options %}
+                    <label class="flex items-center mb-2">
+                        <input type="checkbox" name="{{ name }}" value="{{value}}" label="{{ label }}" class="form-checkbox h-5 w-5 text-blue-600 option-checkbox"
+                               _="on change call updateSelection(closest <div.multiple-select/>) then halt">
+                        <span _="on click call toggleDropdown(closest <div.multiple-select/>)" class="ml-2 text-gray-700">{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="mt-8">
+        <button _="on click call fetchExercise() then call loadExercise()" class="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-6 py-2 rounded-md hover:from-indigo-600 hover:to-indigo-700 transition duration-300 text-lg font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+          Iniciar Exercícios
+        </button>
+    </div>
+</section>

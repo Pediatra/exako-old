@@ -1,0 +1,56 @@
+behavior ExerciseOptions
+    def toggleDropdown(container)
+        for dropdown in document.querySelectorAll('.multiple-select')
+            if dropdown != container
+                call hideDropdown(dropdown)
+            end
+        end
+        toggle .hidden on .dropdown-menu in container
+    end
+
+    def hideDropdown(container)
+        add .hidden to .dropdown-menu in container
+    end
+
+    def selectedLabels(container)
+        set labels to []
+        for checkbox in container.querySelectorAll('.option-checkbox')
+            if checkbox.checked
+                append checkbox@label to labels
+            end
+        end
+        return labels.join(", ")
+    end
+
+    def updateSelection(container)
+        set selectedText to selectedLabels(container)
+        set selected to container.querySelector('.selected-items')
+        set selected.textContent to selectedText or selected@alt
+        set allChecked to true
+        for checkbox in container.querySelectorAll('.option-checkbox')
+            if checkbox.checked is false
+                set allChecked to false
+                break
+            end
+        end
+        set container.querySelector('.select-all').checked to allChecked
+        call toggleDropdown(container)
+    end
+
+    def toggleAll(checkbox)
+        set container to checkbox.closest('.multiple-select')
+        set checked to checkbox.checked
+        for optionCheckbox in container.querySelectorAll('.option-checkbox')
+            set optionCheckbox.checked to checked
+        end
+        call updateSelection(container)
+    end
+
+    on click
+        if not event.target.closest('.multiple-select')
+            for dropdown in document.querySelectorAll('.multiple-select')
+                call hideDropdown(dropdown)
+            end
+        end
+    end
+end

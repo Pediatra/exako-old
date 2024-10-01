@@ -1,0 +1,59 @@
+behavior MChoiceExercise
+    def selectChoice(choice)
+        if @exit of #exercise-options
+            exit
+        end
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove @selected from choiceElement
+            remove .bg-indigo-600 from choiceElement
+            add .hover:bg-indigo-100 to choiceElement
+            set span to the first <span/> in choiceElement
+            remove .text-white from span
+            add .text-indigo-800 to span
+        end
+        add @selected to choice
+        add .bg-indigo-600 to choice
+        remove .hover:bg-indigo-100 from choice
+        set span to the first <span/> in choice
+        add .text-white to span
+        remove .text-indigo-800 from span
+    end
+
+    def setChoiceInfo(correctChoice)
+        set #exercise-options@exit to true
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove @selected from choiceElement
+            remove .bg-indigo-600 from choiceElement
+            add .hover:bg-indigo-100 to choiceElement
+            set span to the first <span/> in choiceElement
+            remove .text-white from span
+            add .text-indigo-800 to span
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove .hover:bg-indigo-100 from choiceElement
+            if @value of choiceElement == correctChoice 
+                add .border-green-600 .bg-green-100 to choiceElement
+            else
+                add .border-red-600 .bg-red-100 to choiceElement
+            end
+        end 
+    end
+
+    def getAnswer()
+        set button to the first <button[selected]/>
+        if button == null
+            exit
+        end
+        return {
+            "term_id": @value of button,
+            "term_lexical_id": @value of button,
+            "term_definition_id": @value of button
+        } 
+    end
+
+    def checkAnswer(url)
+        call checkExercise(url, getAnswer()) then put it into exerciseResult
+        call setMessageContent(exerciseResult)
+        call setChoiceInfo(exerciseResult.correct_answer)
+        wait 4s then call loadExercise()
+    end
+end

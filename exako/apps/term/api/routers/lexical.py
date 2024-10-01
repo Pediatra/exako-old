@@ -41,10 +41,11 @@ def create_lexical(
     lexical_schema: schema.TermLexicalSchema,
 ):
     if TermLexical.objects.filter(
-        Q(
-            Q(value__iexact=lexical_schema.value)
-            | Q(term_value_ref_id=lexical_schema.term_value_ref)
-        ),
+        # Q(
+        #     Q(value__ct=lexical_schema.value)
+        #     | Q(term_value_ref_id=lexical_schema.term_value_ref)
+        # ),
+        value__ct=lexical_schema.value,
         term_id=lexical_schema.term,
         type=lexical_schema.type,
     ).exists():

@@ -1,0 +1,89 @@
+
+
+<section class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-bold mb-4 text-indigo-800">Suas Estatísticas</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="text-center">
+            <p class="text-4xl font-bold text-indigo-600">152</p>
+            <p class="text-gray-600">Exercícios Concluídos</p>
+        </div>
+        <div class="text-center">
+            <p class="text-4xl font-bold text-indigo-600">89%</p>
+            <p class="text-gray-600">Taxa de Acerto</p>
+        </div>
+        <div class="text-center">
+            <p class="text-4xl font-bold text-indigo-600">7</p>
+            <p class="text-gray-600">Dias Seguidos</p>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="flex flex-wrap gap-4 mb-6 justify-center">
+        <div class="relative">
+            <select id="timeFrameSelect" class="appearance-none bg-indigo-50 border border-indigo-300 text-indigo-700 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-indigo-500 transition duration-150 ease-in-out w-40">
+                <option value="day">Dia</option>
+                <option value="week">Semana</option>
+                <option value="month">Mês</option>
+                <option value="total">Total</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-indigo-700">
+                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+            </div>
+        </div>
+        <div class="relative">
+            <select id="exerciseTypeSelect" class="appearance-none bg-indigo-50 border border-indigo-300 text-indigo-700 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-indigo-500 transition duration-150 ease-in-out w-48">
+                <option value="">Todos os Tipos</option>
+                <option value="vocabulary">Vocabulário</option>
+                <option value="grammar">Gramática</option>
+                <option value="pronunciation">Pronúncia</option>
+                <option value="comprehension">Compreensão</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-indigo-700">
+                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+            </div>
+        </div>
+        <div class="relative">
+            <select id="languageSelect" class="appearance-none bg-indigo-50 border border-indigo-300 text-indigo-700 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-indigo-500 transition duration-150 ease-in-out w-48">
+                <option value="">Todos os Idiomas</option>
+                <option value="ENGLISH_USA">Inglês</option>
+                <option value="spanish">Espanhol</option>
+                <option value="french">Francês</option>
+                <option value="german">Alemão</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-indigo-700">
+                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+            </div>
+        </div>
+        <div class="relative">
+            <select id="difficultySelect" class="appearance-none bg-indigo-50 border border-indigo-300 text-indigo-700 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-indigo-500 transition duration-150 ease-in-out w-48">
+                <option value="">Todos os Níveis</option>
+                <option value="easy">Fácil</option>
+                <option value="medium">Médio</option>
+                <option value="hard">Difícil</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-indigo-700">
+                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico -->
+    <div class="w-full h-80">
+        <canvas id="exercisesChart"></canvas>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4 text-center mt-6">
+        <div class="bg-indigo-100 p-3 rounded">
+            <h3 class="font-bold text-sm text-indigo-800">Total</h3>
+            <p class="text-2xl font-bold text-indigo-600" id="totalResolucoes">10521</p>
+        </div>
+        <div class="bg-green-100 p-3 rounded">
+            <h3 class="font-bold text-sm text-green-800">Corretas</h3>
+            <p class="text-2xl font-bold text-green-600" id="resolucoesCorretas">7834</p>
+        </div>
+        <div class="bg-red-100 p-3 rounded">
+            <h3 class="font-bold text-sm text-red-800">Erradas</h3>
+            <p class="text-2xl font-bold text-red-600" id="resolucoesErradas">2687</p>
+        </div>
+    </div>
+</section>

@@ -33,12 +33,9 @@ class ExerciseManager(CustomManager):
             )
         )
 
-        if (
-            exercise_type
-            and isinstance(exercise_type, list)
-            and ExerciseType.RANDOM not in exercise_type
-            or exercise_type != ExerciseType.RANDOM
-        ):
+        if exercise_type and not isinstance(exercise_type, list):
+            exercise_type = [exercise_type]
+        if ExerciseType.RANDOM not in exercise_type:
             queryset = queryset.filter(type__in=exercise_type)
 
         if level:
@@ -54,8 +51,8 @@ class ExerciseManager(CustomManager):
             ).values('term')
             cardset_queryset = Exercise.objects.filter(
                 models.Q(term__in=cardset_query)
-                | models.Q(term_lexical__term__in=cardset_query)
-                | models.Q(term_lexical__term_value_ref__in=cardset_query)
+                # | models.Q(term_lexical__term__in=cardset_query)
+                # | models.Q(term_lexical__term_value_ref__in=cardset_query)
             ).annotate(md5_seed=models.Value('0'))
             queryset = queryset.exclude(
                 id__in=cardset_queryset.values_list('id', flat=True)
@@ -202,6 +199,14 @@ class ExerciseHistory(models.Model):
     correct = models.BooleanField()
     response = models.JSONField(blank=True, null=True)
     request = models.JSONField(blank=True, null=True)
+
+    @classmethod
+    def get_current_streak(cls, user):
+        histories = ExerciseHistory.objects.filter(user=user)
+        first_invalid_subquery = models.Subquery(
+            histories.filter(correct=False).order_by('-created_at').values('id')[:1]
+        )
+        return histories.filter(id__gt=first_invalid_subquery).count()
 
 
 class RandomSeed(models.Func):

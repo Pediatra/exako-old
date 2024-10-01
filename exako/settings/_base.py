@@ -118,7 +118,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'static'
+STATICFILES_DIRS = (BASE_DIR / 'static',)
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -139,3 +139,5 @@ TOKEN_EXPIRATION_DELTA = timedelta(days=7)
 JWT_ALGORITHM = 'HS256'
 
 APPEND_SLASH = False
+
+NINJA_PAGINATION_PER_PAGE = 20

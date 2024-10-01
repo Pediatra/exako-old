@@ -1,0 +1,41 @@
+{% load core_tags %}
+<div class="relative">
+    <div id="example-info" class="absolute top-3 right-3 bg-stone-100 rounded-lg shadow-md p-4 z-10" hx-get="{% url 'exercise:info' %}" hx-trigger="load" hx-preserve _="init wait 100ms then call startTimer()">
+    </div>
+</div>
+
+<section class="bg-white rounded-lg shadow-md p-6 mt-10 relative" _="init set global response to {{ response|to_json }} as Object">
+    <div class="absolute top-4 left-4 cursor-pointer">
+        <i class="fas fa-exclamation-triangle text-2xl text-indigo-600"></i>
+    </div>
+
+    <div class="flex flex-col gap-3 items-center mb-6">
+        <h2 class="text-2xl font-bold text-indigo-800 flex items-center">
+            <i class="fas {{ emoji }} mr-3 text-indigo-600"></i>
+            {{ title }}
+        </h2>
+        <div id="exercise-area" class="w-2/3">
+            {% block exercise_content %}{%endblock %}
+        </div>
+    </div>
+    
+    <div class="absolute bottom-4 left-4 cursor-pointer" _="on click toggle .hidden on #help-modal end">
+        <i class="fas fa-question-circle text-2xl text-indigo-600"></i>
+    </div>
+    
+    <div id="help-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-20">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Como jogar</h3>
+                <div class="mb-3">
+                    {{ description|linebreaksbr }}
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button _="on click toggle .hidden on #help-modal end" class="px-4 py-2 bg-indigo-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

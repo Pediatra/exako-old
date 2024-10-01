@@ -317,6 +317,7 @@ class ExerciseView(Schema):
 class ExerciseResponse(Schema):
     correct: bool
     correct_answer: Any | None = None
+    feedback: str
 
 
 class ExerciseBaseView(Schema):
@@ -338,25 +339,13 @@ class ListenView(ExerciseBaseView):
 
 
 class ListenMChoiceView(ExerciseBaseView):
-    choices: dict[int, dict] = Field(
+    choices: dict[str, str] = Field(
         examples=[
             {
-                1: {
-                    'expression': 'casa',
-                    'audio_file': 'https://example.com/my-audio.mp3',
-                },
-                2: {
-                    'expression': 'asa',
-                    'audio_file': 'https://example.com/my-audio.mp3',
-                },
-                3: {
-                    'expression': 'brasa',
-                    'audio_file': 'https://example.com/my-audio.mp3',
-                },
-                4: {
-                    'expression': 'rasa',
-                    'audio_file': 'https://example.com/my-audio.mp3',
-                },
+                1: 'https://example.com/my-audio.mp3',
+                2: 'https://example.com/my-audio.mp3',
+                3: 'https://example.com/my-audio.mp3',
+                4: 'https://example.com/my-audio.mp3',
             }
         ],
         description='Será retornado sempre 4 alternativas, incluindo a correta.',

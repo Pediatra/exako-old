@@ -287,4 +287,5 @@ class TermImageSchema(Schema):
 
 
 class TermImageView(Schema):
+    id: int
     image: str

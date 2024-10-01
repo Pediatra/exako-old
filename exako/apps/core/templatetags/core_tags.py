@@ -1,3 +1,5 @@
+import json
+
 from django.utils.translation import gettext as _
 from django import template
 from django.utils import timezone
@@ -27,3 +29,16 @@ def simplified_timesince(value):
     else:
         years = diff.days // 365
         return _('{} ano atrás').format(years) if years == 1 else _('{} anos atrás').format(years)
+
+@register.filter(name='to_json')
+def to_json(value):
+    return json.dumps(value)
+
+
+@register.filter(name='number_to_letter')
+def number_to_letter(value):
+    try:
+        value = int(value)
+        return chr(64 + value).upper() if 1 <= value <= 26 else value
+    except (ValueError, TypeError):
+        return value

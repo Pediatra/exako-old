@@ -1,0 +1,59 @@
+{% extends 'exercise/exercises/exercise_base.html' %}
+
+{% block exercise_content %}
+<div _="install SpeakExercise">
+    <div class="flex items-center justify-center space-x-4" _="on load audio.play() end">
+        <audio src="{{ audio_file }}" id="audio"></audio>
+        <button _="on click audio.play() end" id="play-audio" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center space-x-2">
+            <i class="fas fa-volume-up"></i>
+            <span>Ouvir pronúncia</span>
+        </button>
+        <span _="on click call habilita()" class="text-lg text-gray-600">{{ phonetic }}</span>
+    </div>
+    
+    <div class="p-3 mb-3">
+        <h3 class="text-lg text-center font-semibold text-indigo-800">{{ header }}</h3>
+        <div class="w-full pt-4">
+            <div class="flex flex-col items-center">
+                <div class="flex items-center space-x-6">
+                    <button _="on click add @disabled to me then remove @disabled from #record-stop then call recordAudio()" id="record-start" class="w-16 h-16 bg-indigo-600 text-white rounded-full hover:bg-indigo-800 transition duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-microphone text-2xl"></i>
+                    </button>
+                    <div class="text-center">
+                        <span id="record-timer" class="text-2xl font-mono text-indigo-700">00:00</span>
+                    </div>
+                    <button id="record-stop" _="on click add @disabled to me then remove @disabled from #record-discard then call stopRecord() end" disabled class="w-16 h-16 bg-gray-600 text-white rounded-full hover:bg-gray-700 transition duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-stop text-2xl"></i>
+                    </button>
+                </div>
+                <button id="record-discard" _="on click add @disabled to me then remove @disabled from #record-start then call discardRecord()" disabled class="w-8 h-8 bg-red-200 text-red-600 rounded-full hover:bg-red-300 transition duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-trash-alt text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+           
+    <div class="flex justify-center space-x-4">
+        <button _="
+        on click 
+            call checkAnswer('{{ url }}', response) then put it into exerciseResult
+            if exerciseResult != null
+                add @disabled to me
+                add @disabled to #next-button 
+                add @disabled to #record-discard
+                set responseJson to exerciseResult.json()
+                call updateStats(responseJson.correct)
+                call setMessageContent(responseJson)
+                wait 4s then call loadExercise()
+            end
+        end
+        "  class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-check mr-2"></i> Verificar
+        </button>
+        <button id="next-button" _="on click call loadExercise()" class="bg-yellow-500 text-white px-6 py-2 rounded-md hover:bg-yellow-600 transition duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-forward mr-2"></i> Pular
+        </button>
+    </div>
+    <div id="exercise-result-message" class="text-center font-bold mt-4"></div>
+</div>
+{% endblock %}

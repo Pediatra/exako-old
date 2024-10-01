@@ -1,0 +1,35 @@
+{% extends 'exercise/exercises/exercise_base.html' %}
+
+{% block exercise_content %}
+<div _="install ImageMChoiceTextExercise">
+    <div class="p-6 rounded-lg flex flex-col justify-center items-center place-items-center">
+        <h3 class="text-lg font-semibold text-indigo-800 mb-3">{{ header }}</h3>
+        <div class="p-2 rounded-lg cursor-pointer transition duration-300 w-fit">
+            <img src="{{ image }}" alt="alt">
+        </div>
+        <div id="exercise-options" class="flex flex-col justify-center space-y-1 text-center">
+            {% for value, expression in choices.items %}
+            <button _="on click call selectChoice(me)" class="text-lg text-gray-600 underline underline-offset-4 cursor-pointer hover:text-indigo-600" value="{{ value }}">{{ expression }}</button>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="flex justify-center space-x-4 mb-4">
+        <button _="on click 
+            if getAnswer() != null
+                add @disabled to me
+                add @disabled to #next-button
+                call checkAnswer('{{ url }}')
+            end
+        end
+        "  
+        class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-check mr-2"></i> Verificar
+        </button>
+        <button id="next-button" _="on click call loadExercise()" class="bg-yellow-500 text-white px-6 py-2 rounded-md hover:bg-yellow-600 transition duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-forward mr-2"></i> Pular
+        </button>
+    </div>
+    <div id="exercise-result-message" class="text-center font-bold mt-4"></div>
+</div>
+{% endblock %}
+

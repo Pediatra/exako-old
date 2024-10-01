@@ -1,0 +1,79 @@
+behavior SpeakExercise
+    js 
+    const timerElement = document.getElementById('record-timer');
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let timerInterval;
+    let seconds = 0;
+    let audioBlob; 
+
+    function updateTimer() {
+        seconds++;
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    async function recordAudio() {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        
+        seconds = 0;
+        timerElement.textContent = "00:00";
+        timerInterval = setInterval(updateTimer, 1000);
+
+        audioChunks = []; 
+
+        mediaRecorder.addEventListener('dataavailable', event => {
+            audioChunks.push(event.data);
+        });
+
+        mediaRecorder.addEventListener('stop', () => {
+            clearInterval(timerInterval); 
+            audioBlob = new Blob(audioChunks, { type: 'audio/wav' }); 
+            audioChunks = [];
+        });
+    }
+
+    async function stopRecord() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop(); 
+        }
+    }
+
+    function discardRecord() {
+        clearInterval(timerInterval);
+        timerElement.textContent = "00:00";
+        seconds = 0;
+        audioChunks = [];  
+        audioBlob = null;  
+    }
+
+    function habilita() {
+        console.log(response)
+    }
+
+    async function checkAnswer(url, checkResponse) {
+        if (!audioBlob) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav'); 
+        formData.append('answer', JSON.stringify(checkResponse))
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': localStorage.getItem('accessToken'),
+            },
+            body: formData
+        });
+        return response
+    }
+    end
+end

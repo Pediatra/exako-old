@@ -243,6 +243,7 @@ def validate_order_sentence_distractors(exercise):
     term_ids = list(
         Term.objects.filter(
             id__in=exercise.additional_content['distractors']['term']
+            # TODO: LANGUAGE FILTER
         ).values_list('id', flat=True)
     )
     exercise.additional_content['distractors']['term'] = term_ids
@@ -316,7 +317,7 @@ def validate_term_connection_distractors(exercise):
         Term.objects.filter(
             id__in=exercise.additional_content['distractors']['term']
         ).values_list('id', flat=True)
-    )
+    ) #TODO: VER SE DISTRACTORS E CONNECTIONS NÃO SE SOBREPOEM
 
     if len(distractors_term_ids) < 8:
         raise HttpError(

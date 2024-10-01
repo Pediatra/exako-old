@@ -1,0 +1,47 @@
+{% extends 'exercise/exercises/exercise_base.html' %}
+{% load core_tags %}
+
+{% block exercise_content %}
+<div _="install MChoiceExercise">
+    {% if audio_file %}
+    <div class="flex items-center justify-center">
+        <button  id="play-audio" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center space-x-2">
+            <i class="fas fa-volume-up"></i>
+            <span>Ouvir novamente</span>
+        </button>
+    </div>
+    {% endif %}
+    
+    <div class="p-6 rounded-lg mb-6">
+        <h3 class="text-lg font-semibold text-indigo-800 mb-3">{{ header }}</h3>
+        <div id="exercise-options" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-3">
+            {% for value, expression in choices.items %}
+            <button value="{{ value }}" _="on click call selectChoice(me)" class="p-2 text-left rounded-xl transition duration-300 bg-white hover:bg-indigo-100 shadow hover:shadow-md border border-indigo-200 hover:border-indigo-300 flex items-center space-x-3">
+                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-semibold flex-shrink-0">
+                  {{ forloop.counter|number_to_letter }}
+                </div>
+                <span class="flex-grow text-indigo-800 break-words">{{ expression }}</span>
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="flex justify-center space-x-4 mb-4">
+        <button _="on click 
+            if getAnswer() != null
+                add @disabled to me
+                add @disabled to #next-button
+                call checkAnswer('{{ url }}')
+            end
+        end
+        "  
+        class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-check mr-2"></i> Verificar
+        </button>
+        <button id="next-button" _="on click call loadExercise()" class="bg-yellow-500 text-white px-6 py-2 rounded-md hover:bg-yellow-600 transition duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-forward mr-2"></i> Pular
+        </button>
+    </div>
+    <div id="exercise-result-message" class="text-center font-bold mt-4"></div>
+</div>
+{% endblock %}

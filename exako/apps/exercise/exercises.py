@@ -1,11 +1,12 @@
 import re
+import string
 from abc import ABC, abstractmethod
 from functools import cached_property
 from random import randint, sample, shuffle
 
 from django.db.models import OuterRef, Subquery
 from django.db.models.functions import Random
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext as _
 from ninja import File, Router, Schema, UploadedFile
 from pydantic import create_model
@@ -45,12 +46,26 @@ class Exercise(ABC):
     exercise_type: ExerciseType
     title: str
     description: str
+    short_description: str
 
     def __init__(self, exercise_id: int):
         self.exercise = get_object_or_404(
             ExerciseModel,
             id=exercise_id,
             type=self.exercise_type,
+        )
+
+    def render_template(self, request, **extra):
+        build = self.build()
+        response = {
+            key: value
+            for key, value in build.items()
+            if key not in ['title', 'description']
+        }
+        return render(
+            request,
+            self.html_template,
+            context={**build, **extra, 'response': response},
         )
 
     @abstractmethod
@@ -79,6 +94,10 @@ class Exercise(ABC):
             response={**answer, **check_response},
             request=exercise_request,
         )
+        feedback = (
+            constants.CORRECT_FEEDBACK if correct else constants.INCORRECT_FEEDBACK
+        )
+        check_response.update(feedback=feedback)
         return check_response
 
     @classmethod
@@ -165,7 +184,9 @@ class Exercise(ABC):
 
 class OrderSentenceExercise(Exercise):
     exercise_type = ExerciseType.ORDER_SENTENCE
+    html_template = 'exercise/exercises/order_sentence.html'
     title = _('Reordenar frases')
+    short_description = _('Aprenda a estruturar frases corretamente')
     description = _("""
         Esse exercício apresenta uma frase relacionada a um termo ou conceito específico, mas com as palavras embaralhadas.
         O objetivo do usuário é reordenar as palavras para reconstruir a frase na ordem correta.
@@ -203,12 +224,24 @@ class OrderSentenceExercise(Exercise):
         return self.exercise.term_example.example
 
     def assert_answer(self, answer: dict) -> bool:
-        return answer['sentence'].lower() == self.correct_answer.lower()
+        return answer['sentence'].lower().strip() == self.correct_answer.lower()
+
+    def check(self, user: User, answer: dict, exercise_request: dict) -> dict:
+        check_response = super().check(user, answer, exercise_request)
+        if not check_response['correct']:
+            check_response.update(
+                feedback=constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
+                    answer=self.correct_answer
+                )
+            )
+        return check_response
 
 
 class ListenTermExercise(Exercise):
     exercise_type = ExerciseType.LISTEN_TERM
+    html_template = 'exercise/exercises/listen.html'
     title = _('Escutar termo')
+    short_description = _('Aprimore sua compreensão auditiva')
     description = _("""
         Esse exercício ajuda o usuário a identificar o termo correto a partir da sua pronúncia. 
         O exercício reproduz a pronúncia de um termo e apresenta uma lista de alternativas que incluem palavras semelhantes. 
@@ -242,10 +275,22 @@ class ListenTermExercise(Exercise):
     def assert_answer(self, answer: dict) -> bool:
         return answer['expression'].lower() == self.correct_answer.lower()
 
+    def check(self, user: User, answer: dict, exercise_request: dict) -> dict:
+        check_response = super().check(user, answer, exercise_request)
+        if not check_response['correct']:
+            check_response.update(
+                feedback=constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
+                    answer=self.correct_answer
+                )
+            )
+        return check_response
+
 
 class ListenTermMChoiceExercise(Exercise):
     exercise_type = ExerciseType.LISTEN_TERM_MCHOICE
+    html_template = 'exercise/exercises/listen_mchoice.html'
     title = _('Escutar termos similares')
+    short_description = _('Diferencie termos semelhantes pela audição')
     description = _("""
         Esse exercício desafia o usuário a identificar um termo com base em sua pronúncia. 
         O exercício reproduz a pronúncia do termo em áudio e apresenta uma lista de alternativas que incluem palavras similares. 
@@ -259,10 +304,7 @@ class ListenTermMChoiceExercise(Exercise):
 
     def build(self) -> dict:
         choices = dict()
-        choices[self.correct_answer] = {
-            'expression': self.exercise.term.expression,
-            'audio_file': self.exercise.term_pronunciation.audio_file,
-        }
+        choices[self.correct_answer] = self.exercise.term_pronunciation.audio_file
         choices_rhymes = (
             TermLexical.objects.filter(
                 term_id=self.exercise.term_id,
@@ -282,22 +324,18 @@ class ListenTermMChoiceExercise(Exercise):
             .values_list(
                 'term_value_ref_id',
                 'term_value_ref__expression',
-                'audio_file',
             )
         )
-        choices.update(
-            {
-                term_id: {'expression': expression, 'audio_file': audio_file}
-                for term_id, expression, audio_file in choices_rhymes
-            }
-        )
+        choices.update({term_id: audio_file for term_id, audio_file in choices_rhymes})
         choices = _shuffle_dict(choices)
 
         return {
             'choices': choices,
             'title': self.title,
             'description': self.description,
-            'header': constants.LISTEN_MCHOICE_HEADER,
+            'header': constants.LISTEN_MCHOICE_HEADER.format(
+                term=self.exercise.term.expression
+            ),
         }
 
     @cached_property
@@ -310,7 +348,9 @@ class ListenTermMChoiceExercise(Exercise):
 
 class ListenSentenceExercise(Exercise):
     exercise_type = ExerciseType.LISTEN_SENTENCE
+    html_template = 'exercise/exercises/listen.html'
     title = _('Escutar frase')
+    short_description = _('Melhore sua compreensão de frases')
     description = _("""
         Esse exercício ajuda o usuário a praticar a escrita correta de uma frase com base na sua pronúncia. 
         O exercício reproduz a pronúncia de uma frase que é relacionada a um termo específico. 
@@ -335,12 +375,30 @@ class ListenSentenceExercise(Exercise):
         return self.exercise.term_example.example
 
     def assert_answer(self, answer: dict) -> bool:
-        return answer['sentence'].lower() == self.correct_answer.lower()
+        sentence = answer['sentence'].lower()
+        sentence = sentence.translate(str.maketrans('', '', string.punctuation))
+        correct_answer = self.correct_answer.lower()
+        correct_answer = correct_answer.translate(
+            str.maketrans('', '', string.punctuation)
+        )
+        return sentence == correct_answer
+
+    def check(self, user: User, answer: dict, exercise_request: dict) -> dict:
+        check_response = super().check(user, answer, exercise_request)
+        if not check_response['correct']:
+            check_response.update(
+                feedback=constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
+                    answer=self.correct_answer
+                )
+            )
+        return check_response
 
 
 class SpeakTermExercise(Exercise):
     exercise_type = ExerciseType.SPEAK_TERM
+    html_template = 'exercise/exercises/speak.html'
     title = _('Falar termo')
+    short_description = _('Pratique a pronúncia correta de termos')
     description = _("""
         Esse exercício desafia o usuário a pronunciar corretamente um termo com base na sua fonética ou pronúncia fornecida. 
         O exercício reproduz a fonética ou pronúncia do termo e o usuário deve usar seu microfone para gravar sua própria pronúncia. 
@@ -376,6 +434,10 @@ class SpeakTermExercise(Exercise):
         # TODO: SpeechToText API
         return True
 
+    def check(self, user: User, answer: dict, exercise_request: dict) -> dict:
+        answer.pop('audio')  # TODO: SpeechToText API
+        return super().check(user, answer, exercise_request)
+
     @classmethod
     def _generate_check_endpoint(cls, CheckSchema: type[Schema], **answer_fields):
         def check_endpoint(
@@ -398,7 +460,9 @@ class SpeakTermExercise(Exercise):
 
 class SpeakSentenceExercise(Exercise):
     exercise_type = ExerciseType.SPEAK_SENTENCE
+    html_template = 'exercise/exercises/speak.html'
     title = _('Falar frase')
+    short_description = _('Aperfeiçoe sua pronúncia de frases')
     description = _("""
         Esse exercício desafia o usuário a pronunciar corretamente uma frase com base na sua fonética ou pronúncia fornecida. 
         O exercício reproduz a fonética ou pronúncia da frase e o usuário deve usar seu microfone para gravar sua própria pronúncia. 
@@ -429,6 +493,10 @@ class SpeakSentenceExercise(Exercise):
         # TODO: SpeechToText API
         return True
 
+    def check(self, user: User, answer: dict, exercise_request: dict) -> dict:
+        answer.pop('audio')  # TODO: SpeechToText API
+        return super().check(user, answer, exercise_request)
+
     @classmethod
     def _generate_check_endpoint(cls, CheckSchema: type[Schema], **answer_fields):
         def check_endpoint(
@@ -451,7 +519,9 @@ class SpeakSentenceExercise(Exercise):
 
 class TermMChoiceExercise(Exercise):
     exercise_type = ExerciseType.TERM_MCHOICE
+    html_template = 'exercise/exercises/multiple_choice.html'
     title = _('Completar a frase')
+    short_description = _('Teste sua compreensão contextual')
     description = _("""
         Esse exercício desafia o usuário a completar uma frase com base em um termo específico que está faltando na frase.
         O exercício fornece uma frase com um espaço vazio onde o termo deve ser inserido, e o usuário deve escolher a alternativa correta que preenche o espaço de forma apropriada.
@@ -551,7 +621,9 @@ class TermMChoiceExercise(Exercise):
 
 class TermDefinitionMChoiceExercise(Exercise):
     exercise_type = ExerciseType.TERM_DEFINITION_MCHOICE
+    html_template = 'exercise/exercises/multiple_choice.html'
     title = _('Identificar significado')
+    short_description = _('Aprenda a associar termos às suas definições')
     description = _("""
         Esse exercício ajuda o usuário a associar um termo com a definição correta. 
         O exercício fornece um termo e apresenta quatro alternativas de definições. 
@@ -599,7 +671,9 @@ class TermDefinitionMChoiceExercise(Exercise):
 
 class TermImageMChoiceExercise(Exercise):
     exercise_type = ExerciseType.TERM_IMAGE_MCHOICE
+    html_template = 'exercise/exercises/image_mchoice.html'
     title = _('Identificar imagem')
+    short_description = _('Relacione termos com suas imagens')
     description = _("""
         O exercício reproduz o áudio que fornece informações sobre o termo e apresenta várias imagens como opções. 
         O usuário deve selecionar a imagem que corresponde ao termo descrito no áudio.
@@ -615,9 +689,10 @@ class TermImageMChoiceExercise(Exercise):
             'term_image'
         ]
         distractors = list(sample(distractors_list, 3))
-        return dict(
-            TermImage.objects.filter(id__in=distractors).values_list('term_id', 'image')
-        )
+        return {
+            term.term_id: term.image.url
+            for term in TermImage.objects.filter(id__in=distractors)
+        }
 
     def build(self) -> dict:
         choices = dict()
@@ -643,7 +718,9 @@ class TermImageMChoiceExercise(Exercise):
 
 class TermImageMChoiceTextExercise(Exercise):
     exercise_type = ExerciseType.TERM_IMAGE_MCHOICE_TEXT
+    html_template = 'exercise/exercises/image_mchoice_text.html'
     title = _('Identificar imagem')
+    short_description = _('Associe imagens aos seus termos')
     description = _("""
         Esse exercício desafia o usuário a identificar o termo correto com base em uma imagem fornecida. 
         O exercício exibe uma imagem e apresenta uma lista de termos como opções. 
@@ -686,7 +763,9 @@ class TermImageMChoiceTextExercise(Exercise):
 
 class TermConnectionExercise(Exercise):
     exercise_type = ExerciseType.TERM_CONNECTION
+    html_template = 'exercise/exercises/term_connection.html'
     title = _('Conexões com termo')
+    short_description = _('Descubra relações entre termos')
     description = _("""
         Esse exercício desafia o usuário a identificar quais alternativas estão relacionadas a um termo específico a partir de um conjunto de 12 opções. 
         O usuário deve selecionar 4 alternativas que têm conexão direta com o termo e evitar os distratores.
@@ -724,3 +803,18 @@ class TermConnectionExercise(Exercise):
 
     def assert_answer(self, answer: dict) -> bool:
         return all([choice in self.correct_answer for choice in answer['choices']])
+
+
+exercises_map = {
+    OrderSentenceExercise,
+    ListenTermExercise,
+    ListenTermMChoiceExercise,
+    ListenSentenceExercise,
+    SpeakTermExercise,
+    SpeakSentenceExercise,
+    TermMChoiceExercise,
+    TermDefinitionMChoiceExercise,
+    TermImageMChoiceExercise,
+    TermImageMChoiceTextExercise,
+    TermConnectionExercise,
+}

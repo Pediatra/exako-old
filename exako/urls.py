@@ -18,6 +18,8 @@ Including another URLconf
 from django.contrib import admin
 from django.http import Http404
 from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
 from ninja import NinjaAPI
 
 from exako.apps.card.api.routers import card_router
@@ -31,13 +33,18 @@ api.add_router('term/', term_router)
 api.add_router('auth/', auth_router)
 api.add_router('card/', card_router)
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', api.urls),
-    path('', include('exako.apps.term.urls')),
-    path('cardset/', include('exako.apps.card.urls')),
-    path('auth/', include('exako.apps.user.urls')),
-]
+urlpatterns = (
+    [
+        path('admin/', admin.site.urls),
+        path('api/', api.urls),
+        path('', include('exako.apps.term.urls')),
+        path('cardset/', include('exako.apps.card.urls')),
+        path('auth/', include('exako.apps.user.urls')),
+        path('exercise/', include('exako.apps.exercise.urls')),
+    ]
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+)
 
 
 @api.exception_handler(InvalidToken)

@@ -1,0 +1,41 @@
+{% extends 'exercise/exercises/exercise_base.html' %}
+
+{% block exercise_content %}
+<div _="install ImageMChoiceExercise">
+    <div class="flex items-center justify-center" _="on load audio.play() end">
+        <audio src="{{ audio_file }}" id="audio"></audio>
+        <button _="on click audio.play() end" id="play-audio" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center space-x-2">
+            <i class="fas fa-volume-up"></i>
+            <span>Ouvir novamente</span>
+        </button>
+    </div>
+
+    <div class="p-6 rounded-lg flex flex-col justify-center items-center place-items-center">
+        <h3 class="text-lg font-semibold text-indigo-800 mb-3">{{ header }}</h3>
+        <div id="exercise-options" class="grid grid-cols-2 gap-4 place-items-center">
+            {% for value, image in choices.items %}
+            <button _="on click call selectChoice(me)" value="{{ value }}" class="p-2 rounded-lg cursor-pointer hover:bg-gray-300 transition duration-300 w-fit">
+                <img src="{{ image }}" alt="alt">
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="flex justify-center space-x-4 mb-4">
+        <button _="on click 
+            if getAnswer() != null
+                add @disabled to me
+                add @disabled to #next-button
+                call checkAnswer('{{ url }}')
+            end
+        end
+        "  
+        class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-check mr-2"></i> Verificar
+        </button>
+        <button id="next-button" _="on click call loadExercise()" class="bg-yellow-500 text-white px-6 py-2 rounded-md hover:bg-yellow-600 transition duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-forward mr-2"></i> Pular
+        </button>
+    </div>
+    <div id="exercise-result-message" class="text-center font-bold mt-4"></div>
+</div>
+{% endblock %}

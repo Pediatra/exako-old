@@ -1,0 +1,11 @@
+behavior ListenExercise
+    def getAnswer()
+        return {"sentence": value of #exercise-user-input, "expression": value of #exercise-user-input}
+    end
+    
+    def checkAnswer(url)
+        call checkExercise(url, getAnswer()) then put it into exerciseResult
+        call setMessageContent(exerciseResult)
+        wait 4s then call loadExercise()
+    end
+end
