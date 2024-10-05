@@ -14,15 +14,7 @@
         <h3 class="text-lg font-semibold text-indigo-800 mb-3">{{ header }}</h3>
         <input type="text" id="exercise-user-input" class="w-full p-2 border rounded bg-stone-200 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Digite aqui...">
     </div>
-           
-    <div class="flex justify-center space-x-4 mb-4">
-        <button _="on click add @disabled to me then add @disabled to #next-button then call checkAnswer('{{ url }}')"  class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
-            <i class="fas fa-check mr-2"></i> Verificar
-        </button>
-        <button id="next-button" _="on click call loadExercise()" class="bg-yellow-500 text-white px-6 py-2 rounded-md hover:bg-yellow-600 transition duration-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
-            <i class="fas fa-forward mr-2"></i> Pular
-        </button>
-    </div>
-    <div id="exercise-result-message" class="text-center font-bold mt-4"></div>
+
+    {% include 'exercise/partials/exercise_buttons.html' %}
 </div>
 {% endblock %}

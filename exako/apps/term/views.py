@@ -50,7 +50,7 @@ def term_view(request, language):
     expression = request.GET.get('expression')
     if not expression:
         return redirect('/')
-    term = Term.objects.get(expression=expression, language=language)
+    term = Term.objects.filter(expression=expression, language=language).first()
     if not term:
         return redirect('/')
     lexical = request.GET.get('lexical')

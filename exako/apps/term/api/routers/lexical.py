@@ -41,13 +41,16 @@ def create_lexical(
     lexical_schema: schema.TermLexicalSchema,
 ):
     if TermLexical.objects.filter(
-        # Q(
-        #     Q(value__ct=lexical_schema.value)
-        #     | Q(term_value_ref_id=lexical_schema.term_value_ref)
-        # ),
-        value__ct=lexical_schema.value,
-        term_id=lexical_schema.term,
-        type=lexical_schema.type,
+        Q(
+            value__ct=lexical_schema.value,
+            term_id=lexical_schema.term,
+            type=lexical_schema.type,
+        )
+        | Q(
+            term_value_ref_id=lexical_schema.term_value_ref,
+            term_id=lexical_schema.term,
+            type=lexical_schema.type,
+        )
     ).exists():
         raise HttpError(status_code=409, message='lexical already exists to this term.')
     return 201, TermLexical.objects.create(**lexical_schema.model_dump())

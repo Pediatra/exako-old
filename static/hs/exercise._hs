@@ -1,235 +1,588 @@
-behavior Exercise js function addQueryParam(url, param, value) {
-let baseUrl = window.location.origin; let urlObject = new URL(url, baseUrl); urlObject.searchParams.append(param, value);
-return urlObject.toString(); }
-function setQueryParam(url, param, value) {
-let baseUrl = window.location.origin; let urlObject = new URL(url, baseUrl); urlObject.searchParams.set(param, value);
-return urlObject.toString(); }
-end
-def setExerciseURL()
-if url == undefined set global url to '/api/term/exercise/' for container in document.querySelectorAll('.multiple-select') for checkbox in container.querySelectorAll('.option-checkbox')
-if checkbox.checked set global url to addQueryParam(url, checkbox@name, checkbox@value)
-end
-end
-end
-end
-if seed == undefined set global seed to Math.random() set global url to setQueryParam(url, "seed", seed)
-end
-if page == undefined set global page to 0
-end set global page to (page + 1) set global url to setQueryParam(url, "page", page)
-end
-def fetchExercise() setExerciseURL() fetch `${url}` as Object then put the result into response
-if response.items.length == 0 go to url '/exercise/'
-else set global exercises to response.items
-end
-end
-def loadExercise()
-if exercises.length == 0 call fetchExercise()
-end set exercise to exercises.shift() htmx.ajax('GET', `/exercise/partial/view/${exercise.id}/${exercise.type}?url=${exercise.url}`, '#exercise-main-content')
-end js let seconds = 0; let timerInterval = null; function startTimer() {
-timerElement = document.getElementById('timer')
-if (timerInterval !== null) {
-return; }
-timerInterval = setInterval(() => {
-seconds++; const minutes = Math.floor(seconds / 60); const remainingSeconds = seconds % 60; timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`; }, 1000); }
-function incrementStats(type) {
-const elements = {
-streak: document.getElementById('streak'), correct: document.getElementById('correct'), incorrect: document.getElementById('incorrect') }; let currentValue = parseInt(elements[type].textContent) || 0; elements[type].textContent = currentValue + 1; }
-function mergeResponse(response, answer) {
-return  { ...response, answer: { ...answer } }; }
-end
-def checkExercise(url, answer) set bodyContent to mergeResponse(response, answer as Object) fetch `${url}` as Object with method:"POST",body: bodyContent as JSON put it into exerciseResult call updateStats(exerciseResult.correct)
-return exerciseResult
-end
-def updateStats(correct)
-if correct incrementStats("correct") incrementStats("streak")
-else incrementStats("incorrect") set document.getElementById("streak").textContent to 0
-end
-end
-def setMessageContent(exerciseResult) set resultElement to document.getElementById("exercise-result-message")
-if exerciseResult.correct set colorClass to "text-green-400"
-else set colorClass to "text-red-400"
-end make a <span/> then add .{colorClass} to it set its textContent to exerciseResult.feedback put it into resultElement
-end
-end
+behavior Exercise
+    js 
+        function addQueryParam(url, param, value) {
+            let baseUrl = window.location.origin; 
+            let urlObject = new URL(url, baseUrl); 
+            urlObject.searchParams.append(param, value);
+            return urlObject.toString();
+        }
+        function setQueryParam(url, param, value) {
+            let baseUrl = window.location.origin; 
+            let urlObject = new URL(url, baseUrl); 
+            urlObject.searchParams.set(param, value);
+            return urlObject.toString();
+        }
+    end
 
+    def setExerciseURL()
+        if url == undefined
+            set global url to '/api/term/exercise/'
+            for container in document.querySelectorAll('.multiple-select')
+                for checkbox in container.querySelectorAll('.option-checkbox')
+                    if checkbox.checked
+                        set global url to addQueryParam(url, checkbox@name, checkbox@value)
+                    end
+                end
+            end
+        end
+        if seed == undefined
+            set global seed to Math.random()
+            set global url to setQueryParam(url, "seed", seed)
+        end
+        if page == undefined
+            set global page to 0
+        end
+        set global page to (page + 1)
+        set global url to setQueryParam(url, "page", page)
+    end
+
+    def fetchExercise()
+        setExerciseURL()
+        fetch `${url}` as Object then put the result into response 
+        if response.items.length == 0
+            go to url '/exercise/'
+        else
+            set global exercises to response.items
+        end
+    end
+
+    def loadExercise()
+        if exercises.length == 0
+            call fetchExercise()
+        end
+        set exercise to exercises.shift()
+        htmx.ajax('GET', `/exercise/partial/view/${exercise.id}/${exercise.type}?url=${exercise.url}`, '#exercise-main-content')
+    end
+
+    js 
+    let seconds = 0;
+    let timerInterval = null;
+
+    function startTimer() {
+        timerElement = document.getElementById('timer')
+
+        if (timerInterval !== null) {
+            return;
+        }
+
+        timerInterval = setInterval(() => {
+            seconds++;
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }, 1000);
+    }
+
+    function incrementStats(type) {
+        const elements = {
+          streak: document.getElementById('streak'),
+          correct: document.getElementById('correct'),
+          incorrect: document.getElementById('incorrect')
+        };
+      
+        let currentValue = parseInt(elements[type].textContent) || 0;
+        elements[type].textContent = currentValue + 1;
+    }
+
+    function mergeResponse(response, answer) {
+        return  { ...response, answer: { ...answer } };
+    }
+    end
+
+    def checkExercise(url, answer)
+        set bodyContent to mergeResponse(response, answer as Object)
+        fetch `${url}` as Object with method:"POST",body: bodyContent as JSON put it into exerciseResult
+        call updateStats(exerciseResult.correct)
+        return exerciseResult
+    end
+
+    def updateStats(correct)
+        if correct
+            incrementStats("correct")
+            incrementStats("streak")
+        else
+            incrementStats("incorrect")
+            set document.getElementById("streak").textContent to 0
+        end
+    end
+
+    def setMessageContent(exerciseResult)
+        set resultElement to document.getElementById("exercise-result-message")
+        if exerciseResult.correct
+            set colorClass to "text-green-400"
+        else
+            set colorClass to "text-red-400"
+        end
+        make a <span/> then add .{colorClass} to it
+        set its textContent to exerciseResult.feedback
+        put it into resultElement
+    end
+end
 behavior ExerciseOptions
-def toggleDropdown(container) for dropdown in document.querySelectorAll('.multiple-select')
-if dropdown != container call hideDropdown(dropdown)
-end
-end toggle .hidden on .dropdown-menu in container
-end
-def hideDropdown(container) add .hidden to .dropdown-menu in container
-end
-def selectedLabels(container) set labels to [] for checkbox in container.querySelectorAll('.option-checkbox')
-if checkbox.checked append checkbox@label to labels
-end
-end
-return labels.join(", ")
-end
-def updateSelection(container) set selectedText to selectedLabels(container) set selected to container.querySelector('.selected-items') set selected.textContent to selectedText or selected@alt set allChecked to true for checkbox in container.querySelectorAll('.option-checkbox')
-if checkbox.checked is false set allChecked to false break
-end
-end set container.querySelector('.select-all').checked to allChecked call toggleDropdown(container)
-end
-def toggleAll(checkbox) set container to checkbox.closest('.multiple-select') set checked to checkbox.checked for optionCheckbox in container.querySelectorAll('.option-checkbox') set optionCheckbox.checked to checked
-end call updateSelection(container)
-end
-on click
-if not event.target.closest('.multiple-select') for dropdown in document.querySelectorAll('.multiple-select') call hideDropdown(dropdown)
-end
-end
-end
-end
+    def toggleDropdown(container)
+        for dropdown in document.querySelectorAll('.multiple-select')
+            if dropdown != container
+                call hideDropdown(dropdown)
+            end
+        end
+        toggle .hidden on .dropdown-menu in container
+    end
 
+    def hideDropdown(container)
+        add .hidden to .dropdown-menu in container
+    end
+
+    def selectedLabels(container)
+        set labels to []
+        for checkbox in container.querySelectorAll('.option-checkbox')
+            if checkbox.checked
+                append checkbox@label to labels
+            end
+        end
+        return labels.join(", ")
+    end
+
+    def updateSelection(container)
+        set selectedText to selectedLabels(container)
+        set selected to container.querySelector('.selected-items')
+        set selected.textContent to selectedText or selected@alt
+        set allChecked to true
+        for checkbox in container.querySelectorAll('.option-checkbox')
+            if checkbox.checked is false
+                set allChecked to false
+                break
+            end
+        end
+        set container.querySelector('.select-all').checked to allChecked
+        call toggleDropdown(container)
+    end
+
+    def toggleAll(checkbox)
+        set container to checkbox.closest('.multiple-select')
+        set checked to checkbox.checked
+        for optionCheckbox in container.querySelectorAll('.option-checkbox')
+            set optionCheckbox.checked to checked
+        end
+        call updateSelection(container)
+    end
+
+    on click
+        if not event.target.closest('.multiple-select')
+            for dropdown in document.querySelectorAll('.multiple-select')
+                call hideDropdown(dropdown)
+            end
+        end
+    end
+end
 behavior MChoiceExercise
-def selectChoice(choice)
-if @exit of #exercise-options exit
-end for choiceElement in document.querySelectorAll('#exercise-options button') remove @selected from choiceElement remove .bg-indigo-600 from choiceElement add .hover:bg-indigo-100 to choiceElement set span to the first <span/> in choiceElement remove .text-white from span add .text-indigo-800 to span
-end add @selected to choice add .bg-indigo-600 to choice remove .hover:bg-indigo-100 from choice set span to the first <span/> in choice add .text-white to span remove .text-indigo-800 from span
-end
-def setChoiceInfo(correctChoice) set #exercise-options@exit to true for choiceElement in document.querySelectorAll('#exercise-options button') remove @selected from choiceElement remove .bg-indigo-600 from choiceElement add .hover:bg-indigo-100 to choiceElement set span to the first <span/> in choiceElement remove .text-white from span add .text-indigo-800 to span for choiceElement in document.querySelectorAll('#exercise-options button') remove .hover:bg-indigo-100 from choiceElement
-if @value of choiceElement == correctChoice add .border-green-600 .bg-green-100 to choiceElement
-else add .border-red-600 .bg-red-100 to choiceElement
-end
-end
-end
-def getAnswer() set button to the first <button[selected]/>
-if button == null exit
-end
-return {
-"term_id": @value of button, "term_lexical_id": @value of button, "term_definition_id": @value of button }
-end
-def checkAnswer(url) call checkExercise(url, getAnswer()) then put it into exerciseResult call setMessageContent(exerciseResult) call setChoiceInfo(exerciseResult.correct_answer) wait 4s then call loadExercise()
-end
-end
+    def selectChoice(choice)
+        if @exit of #exercise-options
+            exit
+        end
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove @selected from choiceElement
+            remove .bg-indigo-600 from choiceElement
+            add .hover:bg-indigo-100 to choiceElement
+            set span to the first <span/> in choiceElement
+            remove .text-white from span
+            add .text-indigo-800 to span
+        end
+        add @selected to choice
+        add .bg-indigo-600 to choice
+        remove .hover:bg-indigo-100 from choice
+        set span to the first <span/> in choice
+        add .text-white to span
+        remove .text-indigo-800 from span
+    end
 
+    def setChoiceInfo(correctChoice)
+        set #exercise-options@exit to true
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove @selected from choiceElement
+            remove .bg-indigo-600 from choiceElement
+            add .hover:bg-indigo-100 to choiceElement
+            set span to the first <span/> in choiceElement
+            remove .text-white from span
+            add .text-indigo-800 to span
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove .hover:bg-indigo-100 from choiceElement
+            if @value of choiceElement == correctChoice 
+                add .border-green-600 .bg-green-100 to choiceElement
+            else
+                add .border-red-600 .bg-red-100 to choiceElement
+            end
+        end 
+    end
+
+    def getAnswer()
+        set button to the first <button[selected]/>
+        if button == null
+            exit
+        end
+        return {
+            "term_id": @value of button,
+            "term_lexical_id": @value of button,
+            "term_definition_id": @value of button
+        } 
+    end
+
+    def checkAnswer(url)
+        call checkExercise(url, getAnswer()) then put it into exerciseResult
+        call setMessageContent(exerciseResult)
+        call setChoiceInfo(exerciseResult.correct_answer)
+        wait 4s then call loadExercise()
+    end
+
+    on click from #check-button
+        if getAnswer() != null
+            add @disabled to #check-button
+            add @disabled to #next-button
+            call checkAnswer(#check-button@check)
+        end
+    end
+end
 behavior ImageMChoiceExercise
-def selectChoice(choice)
-if @exit of #exercise-options exit
-end for choiceElement in document.querySelectorAll('#exercise-options button') remove @selected from choiceElement remove .bg-indigo-300 from choiceElement add .hover:bg-gray-300 to choiceElement
-end add @selected to choice add .bg-indigo-300 to choice remove .hover:bg-gray-300 from choice
-end
-def setChoiceInfo(correctChoice) set #exercise-options@exit to true for choiceElement in document.querySelectorAll('#exercise-options button') remove @selected from choiceElement remove .bg-indigo-300 .hover:bg-indigo-100 from choiceElement add .hover:bg-gray-300 to choiceElement
-if @value of choiceElement == correctChoice add .border-2 .border-green-400 .bg-green-100 to choiceElement
-else add .border-2 .border-red-400 .bg-red-100 to choiceElement
-end
-end
-end
-def getAnswer() set button to the first <button[selected]/>
-if button == null exit
-end
-return {"term_id": @value of button}
-end
-def checkAnswer(url) call checkExercise(url, getAnswer()) then put it into exerciseResult call setMessageContent(exerciseResult) call setChoiceInfo(exerciseResult.correct_answer) wait 4s then call loadExercise()
-end
-end
+    def selectChoice(choice)
+        if @exit of #exercise-options
+            exit
+        end
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove @selected from choiceElement
+            remove .bg-indigo-300 from choiceElement
+            add .hover:bg-gray-300 to choiceElement
+        end
+        add @selected to choice
+        add .bg-indigo-300 to choice
+        remove .hover:bg-gray-300 from choice
+    end
 
+    def setChoiceInfo(correctChoice)
+        set #exercise-options@exit to true
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove @selected from choiceElement
+            remove .bg-indigo-300 .hover:bg-indigo-100 from choiceElement
+            add .hover:bg-gray-300 to choiceElement
+            if @value of choiceElement == correctChoice 
+                add .border-2 .border-green-400 .bg-green-100 to choiceElement
+            else
+                add .border-2 .border-red-400 .bg-red-100 to choiceElement
+            end
+        end 
+    end
+
+    def getAnswer()
+        set button to the first <button[selected]/>
+        if button == null
+            exit
+        end
+        return {"term_id": @value of button} 
+    end
+
+    def checkAnswer(url)
+        call checkExercise(url, getAnswer()) then put it into exerciseResult
+        call setMessageContent(exerciseResult)
+        call setChoiceInfo(exerciseResult.correct_answer)
+        wait 4s then call loadExercise()
+    end
+
+    on click from #check-button
+        if getAnswer() != null
+            add @disabled to #check-button
+            add @disabled to #next-button
+            call checkAnswer(#check-button@check)
+        end
+    end
+end
 behavior ListenExercise
-def getAnswer()
-return {"sentence": value of #exercise-user-input, "expression": value of #exercise-user-input}
-end
-def checkAnswer(url) call checkExercise(url, getAnswer()) then put it into exerciseResult call setMessageContent(exerciseResult) wait 4s then call loadExercise()
-end
-end
+    def getAnswer()
+        return {"sentence": value of #exercise-user-input, "expression": value of #exercise-user-input}
+    end
+    
+    def checkAnswer(url)
+        call checkExercise(url, getAnswer()) then put it into exerciseResult
+        call setMessageContent(exerciseResult)
+        wait 4s then call loadExercise()
+    end
 
+    on click from #check-button
+        add @disabled to #check-button
+        add @disabled to #next-button
+        call checkAnswer(#check-button@check)
+    end
+end
 behavior ImageMChoiceTextExercise
-def selectChoice(choice)
-if @exit of #exercise-options exit
-end for choiceElement in document.querySelectorAll('#exercise-options button') remove @selected from choiceElement remove .text-indigo-600 from choiceElement add .text-gray-600 .hover:text-indigo-600 to choiceElement
-end add @selected to choice add .text-indigo-600 to choice remove .text-gray-600 .hover:text-indigo-600 from choice
-end
-def setChoiceInfo(correctChoice) set #exercise-options@exit to true for choiceElement in document.querySelectorAll('#exercise-options button') remove @selected from choiceElement remove .text-indigo-600 .hover:text-indigo-600 .text-gray-600 from choiceElement
-if @value of choiceElement == correctChoice add .text-green-500 to choiceElement
-else add .text-red-500 to choiceElement
-end
-end
-end
-def getAnswer() set button to the first <button[selected]/>
-if button == null exit
-end
-return {"term_id": @value of button}
-end
-def checkAnswer(url) call checkExercise(url, getAnswer()) then put it into exerciseResult call setMessageContent(exerciseResult) call setChoiceInfo(exerciseResult.correct_answer) wait 4s then call loadExercise()
-end
-end
+    def selectChoice(choice)
+        if @exit of #exercise-options
+            exit
+        end
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove @selected from choiceElement
+            remove .text-indigo-600 from choiceElement
+            add .text-gray-600 .hover:text-indigo-600 to choiceElement
+        end
+        add @selected to choice
+        add .text-indigo-600 to choice
+        remove .text-gray-600 .hover:text-indigo-600 from choice
+    end
 
+    def setChoiceInfo(correctChoice)
+        set #exercise-options@exit to true
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove @selected from choiceElement
+            remove .text-indigo-600 .hover:text-indigo-600 .text-gray-600 from choiceElement
+            if @value of choiceElement == correctChoice 
+                add .text-green-500 to choiceElement
+            else
+                add .text-red-500 to choiceElement
+            end
+        end 
+    end
+
+    def getAnswer()
+        set button to the first <button[selected]/>
+        if button == null
+            exit
+        end
+        return {"term_id": @value of button} 
+    end
+
+    def checkAnswer(url)
+        call checkExercise(url, getAnswer()) then put it into exerciseResult
+        call setMessageContent(exerciseResult)
+        call setChoiceInfo(exerciseResult.correct_answer)
+        wait 4s then call loadExercise()
+    end
+
+    on click from #check-button
+        if getAnswer() != null
+            add @disabled to #check-button
+            add @disabled to #next-button
+            call checkAnswer(#check-button@check)
+        end
+    end
+end
 behavior ConnectionExercise
-def selectChoice(choice)
-if @exit of #exercise-options exit
-end
-if choice@selected remove @selected from choice remove .bg-indigo-600 .text-white from choice add .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 to choice
-else set choice@selected to true add .bg-indigo-600 .text-white to choice remove .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 from choice
-end set selectCount to 0 for choiceElement in document.querySelectorAll('#exercise-options button')
-if choiceElement@selected set selectCount to selectCount + 1
-end
-end
-if selectCount > 4 set choiceElement to first <button[selected]/>
-if choiceElement === choice set choiceElement to last <button[selected]/>
-end remove @selected from choiceElement remove .bg-indigo-600 .text-white from choiceElement add .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 to choiceElement
-end
-end
-def setChoiceInfo(correctChoices) set #exercise-options@exit to true for choiceElement in document.querySelectorAll('#exercise-options button') remove @selected from choiceElement remove .bg-indigo-600 .text-white .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 from choiceElement set choiceValue to @value of choiceElement
-if correctChoices contains choiceValue as Int add .border-green-600 .bg-green-100 to choiceElement
-else add .border-red-600 .bg-red-100 to choiceElement
-end
-end
-end
-def getAnswer() set selectCount to 0 set choices to [] for choiceElement in document.querySelectorAll('#exercise-options button')
-if choiceElement@selected set selectCount to selectCount + 1 append choiceElement@value to choices
-end
-end
-if selectCount != 4 exit
-end
-return {"choices": choices}
-end
-def checkAnswer(url) call checkExercise(url, getAnswer()) then put it into exerciseResult call setMessageContent(exerciseResult) call setChoiceInfo(exerciseResult.correct_answer) wait 4s then call loadExercise()
-end
-end
+    def selectChoice(choice)
+        if @exit of #exercise-options
+            exit
+        end
+        if choice@selected
+            remove @selected from choice
+            remove .bg-indigo-600 .text-white from choice
+            add .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 to choice
+        else 
+            set choice@selected to true
+            add .bg-indigo-600 .text-white to choice
+            remove .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 from choice
+        end
+        set selectCount to 0
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            if choiceElement@selected 
+                set selectCount to selectCount + 1
+            end
+        end
+        if selectCount > 4
+            set choiceElement to first <button[selected]/>
+            if choiceElement === choice
+                set choiceElement to last <button[selected]/>
+            end
+            remove @selected from choiceElement
+            remove .bg-indigo-600 .text-white from choiceElement
+            add .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 to choiceElement
+        end
+    end
 
-behavior SpeakExercise js const timerElement = document.getElementById('record-timer'); let mediaRecorder; let audioChunks = []; let timerInterval; let seconds = 0; let audioBlob; function updateTimer() {
-seconds++; const minutes = Math.floor(seconds / 60); const secs = seconds % 60; timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`; }
-async function recordAudio() {
-const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); mediaRecorder.start(); seconds = 0; timerElement.textContent = "00:00"; timerInterval = setInterval(updateTimer, 1000); audioChunks = []; mediaRecorder.addEventListener('dataavailable', event => {
-audioChunks.push(event.data); }); mediaRecorder.addEventListener('stop', () => {
-clearInterval(timerInterval); audioBlob = new Blob(audioChunks, { type: 'audio/wav' }); audioChunks = []; }); }
-async function stopRecord() {
-if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-mediaRecorder.stop(); }
-}
-function discardRecord() {
-clearInterval(timerInterval); timerElement.textContent = "00:00"; seconds = 0; audioChunks = []; audioBlob = null; }
-function habilita() {
-console.log(response) }
-async function checkAnswer(url, checkResponse) {
-if (!audioBlob) {
-return; }
-const formData = new FormData(); formData.append('audio', audioBlob, 'recording.wav'); formData.append('answer', JSON.stringify(checkResponse)) const response = await fetch(url, {
-method: 'POST', headers: {
-'Accept': 'application/json', 'Authorization': localStorage.getItem('accessToken'), }, body: formData });
-return response }
-end
-end
+    def setChoiceInfo(correctChoices)
+        set #exercise-options@exit to true
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            remove @selected from choiceElement
+            remove .bg-indigo-600 .text-white .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 from choiceElement
+            set choiceValue to @value of choiceElement
+            if correctChoices contains choiceValue as Int
+                add .border-green-600 .bg-green-100 to choiceElement
+            else
+                add .border-red-600 .bg-red-100 to choiceElement
+            end
+        end 
+    end
 
+    def getAnswer()
+        set selectCount to 0
+        set choices to []
+        for choiceElement in document.querySelectorAll('#exercise-options button')
+            if choiceElement@selected 
+                set selectCount to selectCount + 1
+                append choiceElement@value to choices
+            end
+        end
+        if selectCount != 4
+            exit
+        end
+        return {"choices": choices} 
+    end
+
+    def checkAnswer(url)
+        call checkExercise(url, getAnswer()) then put it into exerciseResult
+        call setMessageContent(exerciseResult)
+        call setChoiceInfo(exerciseResult.correct_answer)
+        wait 4s then call loadExercise()
+    end
+
+    on click from #check-button
+        if getAnswer() != null
+            add @disabled to #check-button
+            add @disabled to #next-button
+            call checkAnswer(#check-button@check)
+        end
+    end
+end
+behavior SpeakExercise
+    js 
+    const timerElement = document.getElementById('record-timer');
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let timerInterval;
+    let seconds = 0;
+    let audioBlob; 
+
+    function updateTimer() {
+        seconds++;
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    async function recordAudio() {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        
+        seconds = 0;
+        timerElement.textContent = "00:00";
+        timerInterval = setInterval(updateTimer, 1000);
+
+        audioChunks = []; 
+
+        mediaRecorder.addEventListener('dataavailable', event => {
+            audioChunks.push(event.data);
+        });
+
+        mediaRecorder.addEventListener('stop', () => {
+            clearInterval(timerInterval); 
+            audioBlob = new Blob(audioChunks, { type: 'audio/wav' }); 
+            audioChunks = [];
+        });
+    }
+
+    async function stopRecord() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop(); 
+        }
+    }
+
+    function discardRecord() {
+        clearInterval(timerInterval);
+        timerElement.textContent = "00:00";
+        seconds = 0;
+        audioChunks = [];  
+        audioBlob = null;  
+    }
+
+    function habilita() {
+        console.log(response)
+    }
+
+    async function checkAnswer(url, checkResponse) {
+        if (!audioBlob) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav'); 
+        formData.append('answer', JSON.stringify(checkResponse))
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': localStorage.getItem('accessToken'),
+            },
+            body: formData
+        });
+        return response
+    }
+    end
+
+    on click from #check-button
+        call checkAnswer(#check-button@check, response) then put it into exerciseResult
+        if exerciseResult != null
+            add @disabled to #check-button
+            add @disabled to #next-button 
+            add @disabled to #record-discard
+            set responseJson to exerciseResult.json()
+            call updateStats(responseJson.correct)
+            call setMessageContent(responseJson)
+            wait 4s then call loadExercise()
+        end
+    end
+end
 behavior OrderSentenceExercise
-def addPart(span) get #sentence-container then remove .hidden from it make a <span/> then add .{'ml-1.5'} to it set its textContent to span's textContent set @data-value of it to span's @value put it at end of the #sentence-container
-end
-def removePart(span) set sentenceContainer to document.getElementById("sentence-container") set partToRemove to sentenceContainer.querySelector(`span[data-value="${span@value}"]`)
-if partToRemove exists remove partToRemove
-end
-if sentenceContainer.children.length === 0 add .hidden to #sentence-container
-end
-end
-on click from #word-container
-if event.target matches "span" set span to event.target set part to span.textContent
-if span matches '.bg-indigo-600' remove .bg-indigo-600 .text-white from span add .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 to span call removePart(span)
-else add .bg-indigo-600 .text-white to span remove .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 from span call addPart(span)
-end
-end
-end
-def getAnswer() set sentenceContainer to document.getElementById("sentence-container") set sentence to '' for span in sentenceContainer.querySelectorAll("span") set sentence to `${sentence} ${span.textContent}`
-end
-return {"sentence": sentence}
-end
-def checkAnswer(url) call checkExercise(url, getAnswer()) then put it into exerciseResult call setMessageContent(exerciseResult) wait 4s then call loadExercise()
-end
+    def addPart(span)
+        get #sentence-container then remove .hidden from it
+        make a <span/> then add .{'ml-1.5'} to it 
+        set its textContent to span's textContent
+        set @data-value of it to span's @value
+        put it at end of the #sentence-container
+    end
+
+    def removePart(span)
+        set sentenceContainer to document.getElementById("sentence-container")
+        set partToRemove to sentenceContainer.querySelector(`span[data-value="${span@value}"]`)
+        if partToRemove exists
+            remove partToRemove
+        end
+        if sentenceContainer.children.length === 0
+            add .hidden to #sentence-container
+        end
+    end
+    
+    on click from #word-container
+        if event.target matches "span"
+            set span to event.target
+            set part to span.textContent
+            if span matches '.bg-indigo-600'
+                remove .bg-indigo-600 .text-white from span
+                add .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 to span
+                call removePart(span)
+            else
+                add .bg-indigo-600 .text-white to span
+                remove .bg-indigo-100 .text-indigo-800 .hover:bg-indigo-200 from span
+                call addPart(span)
+            end
+        end
+    end
+
+    def getAnswer()
+        set sentenceContainer to document.getElementById("sentence-container")
+        set sentence to ''
+        for span in sentenceContainer.querySelectorAll("span")
+            set sentence to `${sentence} ${span.textContent}`
+        end
+        return {"sentence": sentence}
+    end
+
+    def checkAnswer(url)
+        call checkExercise(url, getAnswer()) then put it into exerciseResult
+        call setMessageContent(exerciseResult)
+        wait 4s then call loadExercise()
+    end
+
+    on click from #check-button
+        add @disabled to #check-button
+        add @disabled to #next-button 
+        call checkAnswer(#check-button@check)
+    end
+
 end

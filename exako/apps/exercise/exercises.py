@@ -81,6 +81,12 @@ class Exercise(ABC):
     def assert_answer(self, answer: dict) -> bool:
         pass
 
+    def get_correct_feedback(self):
+        return constants.CORRECT_FEEDBACK
+
+    def get_incorrect_feedback(self):
+        return constants.INCORRECT_FEEDBACK
+
     def check(self, user: User, answer: dict, exercise_request: dict) -> dict:
         correct = self.assert_answer(answer)
         check_response = {
@@ -94,9 +100,7 @@ class Exercise(ABC):
             response={**answer, **check_response},
             request=exercise_request,
         )
-        feedback = (
-            constants.CORRECT_FEEDBACK if correct else constants.INCORRECT_FEEDBACK
-        )
+        feedback = self.get_correct_feedback if correct else self.get_incorrect_feedback
         check_response.update(feedback=feedback)
         return check_response
 
@@ -226,15 +230,10 @@ class OrderSentenceExercise(Exercise):
     def assert_answer(self, answer: dict) -> bool:
         return answer['sentence'].lower().strip() == self.correct_answer.lower()
 
-    def check(self, user: User, answer: dict, exercise_request: dict) -> dict:
-        check_response = super().check(user, answer, exercise_request)
-        if not check_response['correct']:
-            check_response.update(
-                feedback=constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
-                    answer=self.correct_answer
-                )
-            )
-        return check_response
+    def get_incorrect_feedback(self):
+        return constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
+            answer=self.correct_answer
+        )
 
 
 class ListenTermExercise(Exercise):
@@ -275,15 +274,10 @@ class ListenTermExercise(Exercise):
     def assert_answer(self, answer: dict) -> bool:
         return answer['expression'].lower() == self.correct_answer.lower()
 
-    def check(self, user: User, answer: dict, exercise_request: dict) -> dict:
-        check_response = super().check(user, answer, exercise_request)
-        if not check_response['correct']:
-            check_response.update(
-                feedback=constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
-                    answer=self.correct_answer
-                )
-            )
-        return check_response
+    def get_incorrect_feedback(self):
+        return constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
+            answer=self.correct_answer
+        )
 
 
 class ListenTermMChoiceExercise(Exercise):
@@ -383,15 +377,10 @@ class ListenSentenceExercise(Exercise):
         )
         return sentence == correct_answer
 
-    def check(self, user: User, answer: dict, exercise_request: dict) -> dict:
-        check_response = super().check(user, answer, exercise_request)
-        if not check_response['correct']:
-            check_response.update(
-                feedback=constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
-                    answer=self.correct_answer
-                )
-            )
-        return check_response
+    def get_incorrect_feedback(self):
+        return constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
+            answer=self.correct_answer
+        )
 
 
 class SpeakTermExercise(Exercise):
