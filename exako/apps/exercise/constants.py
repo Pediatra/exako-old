@@ -68,4 +68,4 @@ TERM_CONNECTION_HEADER = _(
 
 CORRECT_FEEDBACK = _('Parabéns, você acertou!')
 INCORRECT_FEEDBACK = _('Você errou!')
-INCORRECT_FEEDBACK_CORRECT_ANSWER = _('Você errou, a resposta correta era: {answer}')
+INCORRECT_FEEDBACK_CORRECT_ANSWER = _('Você errou, a resposta correta era: {answer}.')

@@ -242,8 +242,8 @@ def validate_order_sentence_distractors(exercise):
 
     term_ids = list(
         Term.objects.filter(
-            id__in=exercise.additional_content['distractors']['term']
-            # TODO: LANGUAGE FILTER
+            id__in=exercise.additional_content['distractors']['term'],
+            language=exercise.term_example.language,
         ).values_list('id', flat=True)
     )
     exercise.additional_content['distractors']['term'] = term_ids
@@ -251,13 +251,20 @@ def validate_order_sentence_distractors(exercise):
 
 @validate_exercise.register(ExerciseType.TERM_MCHOICE)
 def validate_term_mchoice_distractors(exercise):
-    is_term_lexical = bool(exercise.term_lexical_id)
-    Model = TermLexical if is_term_lexical else Term
-    distractor_key = 'term_lexical' if is_term_lexical else 'term'
+    sub_type = exercise.additional_content['sub_type']
+    is_sub_type_term = sub_type == ExerciseSubType.TERM
+    Model = Term if is_sub_type_term else TermLexical
+    distractor_key = 'term' if is_sub_type_term else 'term_lexical'
+    language = (
+        exercise.term.language
+        if is_sub_type_term
+        else exercise.term_lexical.term.language
+    )
 
     term_ids = list(
         Model.objects.filter(
-            id__in=exercise.additional_content['distractors'][distractor_key]
+            id__in=exercise.additional_content['distractors'][distractor_key],
+            language=language,
         ).values_list('id', flat=True)
     )
 
@@ -274,7 +281,8 @@ def validate_term_mchoice_distractors(exercise):
 def validate_term_definition_mchoice_distractors(exercise):
     definition_ids = list(
         TermDefinition.objects.filter(
-            id__in=exercise.additional_content['distractors']['term_definition']
+            id__in=exercise.additional_content['distractors']['term_definition'],
+            language=exercise.term_definition.term.language,
         ).values_list('id', flat=True)
     )
     if len(definition_ids) < 3:
@@ -295,10 +303,16 @@ def validate_term_image_distractors(exercise):
     is_image_mchoice = exercise.type == ExerciseType.TERM_IMAGE_MCHOICE
     Model = TermImage if is_image_mchoice else Term
     distractor_key = 'term_image' if is_image_mchoice else 'term'
+    language = (
+        exercise.term_image.term.language
+        if is_image_mchoice
+        else exercise.term.language
+    )
 
     term_ids = list(
         Model.objects.filter(
-            id__in=exercise.additional_content['distractors'][distractor_key]
+            id__in=exercise.additional_content['distractors'][distractor_key],
+            language=language,
         ).values_list('id', flat=True)
     )
 
@@ -315,9 +329,10 @@ def validate_term_image_distractors(exercise):
 def validate_term_connection_distractors(exercise):
     distractors_term_ids = list(
         Term.objects.filter(
-            id__in=exercise.additional_content['distractors']['term']
+            id__in=exercise.additional_content['distractors']['term'],
+            language=exercise.term.language,
         ).values_list('id', flat=True)
-    ) #TODO: VER SE DISTRACTORS E CONNECTIONS NÃO SE SOBREPOEM
+    )
 
     if len(distractors_term_ids) < 8:
         raise HttpError(
@@ -327,7 +342,8 @@ def validate_term_connection_distractors(exercise):
 
     connections_term_ids = list(
         Term.objects.filter(
-            id__in=exercise.additional_content['connections']['term']
+            id__in=exercise.additional_content['connections']['term'],
+            language=exercise.term.language,
         ).values_list('id', flat=True)
     )
 

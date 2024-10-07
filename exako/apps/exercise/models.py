@@ -1,10 +1,10 @@
 from django.db import models
-from django.db.models.base import post_save, pre_save
+from django.db.models.base import pre_save
 from django.dispatch import receiver
 
 from exako.apps.card.models import Card
 from exako.apps.core.models import CustomManager
-from exako.apps.exercise.constants import ExerciseSubType, ExerciseType
+from exako.apps.exercise.constants import ExerciseType
 from exako.apps.exercise.validators import validate_exercise
 from exako.apps.term.constants import Language, Level
 from exako.apps.term.models import (
@@ -33,31 +33,24 @@ class ExerciseManager(CustomManager):
             )
         )
 
-        if exercise_type and not isinstance(exercise_type, list):
+        if not isinstance(exercise_type, list):
             exercise_type = [exercise_type]
         if ExerciseType.RANDOM not in exercise_type:
             queryset = queryset.filter(type__in=exercise_type)
 
         if level:
-            queryset = queryset.filter(
-                id__in=ExerciseLevel.objects.filter(level__in=level).values(
-                    'exercise_id'
-                )
-            )
+            queryset = queryset.filter(level__in=level)
 
         if cardset_id:
-            cardset_query = Card.objects.filter(
-                cardset__user=user, cardset_id__in=cardset_id
-            ).values('term')
-            cardset_queryset = Exercise.objects.filter(
-                models.Q(term__in=cardset_query)
-                # | models.Q(term_lexical__term__in=cardset_query)
-                # | models.Q(term_lexical__term_value_ref__in=cardset_query)
+            exercise_query = Exercise.objects.filter(
+                term__in=Card.objects.filter(
+                    cardset__user=user, cardset_id__in=cardset_id
+                ).values('term')
             ).annotate(md5_seed=models.Value('0'))
             queryset = queryset.exclude(
-                id__in=cardset_queryset.values_list('id', flat=True)
+                id__in=exercise_query.values_list('id', flat=True)
             )
-            queryset = queryset.union(cardset_queryset)
+            queryset = queryset.union(exercise_query)
 
         return queryset.values('type', 'id').order_by('md5_seed')
 
@@ -68,6 +61,12 @@ class Exercise(models.Model):
         choices=Language.choices,
     )
     type = models.CharField(max_length=50, choices=ExerciseType.choices)
+    level = models.CharField(
+        max_length=50,
+        choices=Level.choices,
+        null=True,
+        blank=True,
+    )
     term = models.ForeignKey(
         Term,
         on_delete=models.CASCADE,
@@ -182,16 +181,6 @@ class Exercise(models.Model):
         ]
 
 
-class ExerciseLevel(models.Model):
-    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
-    level = models.CharField(max_length=50, choices=Level.choices)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint('exercise', 'level', name='unique_exercise_level')
-        ]
-
-
 class ExerciseHistory(models.Model):
     exercise = models.ForeignKey(Exercise, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
@@ -217,62 +206,3 @@ class RandomSeed(models.Func):
 @receiver(pre_save, sender=Exercise)
 def register_validators(sender, instance, **kwargs):
     validate_exercise(instance.type, exercise=instance)
-
-
-def create_exercise_level_term_example(sender, instance, **kwargs):
-    if instance.type not in [
-        ExerciseType.ORDER_SENTENCE,
-        ExerciseType.LISTEN_SENTENCE,
-        ExerciseType.SPEAK_SENTENCE,
-    ]:
-        return
-
-    if not instance.term_example.level:
-        return
-
-    ExerciseLevel.objects.get_or_create(
-        exercise=instance,
-        level=instance.term_example.level,
-    )
-
-
-def create_exercise_level_term(sender, instance, **kwargs):
-    if instance.type not in [
-        ExerciseType.LISTEN_TERM,
-        ExerciseType.LISTEN_TERM_MCHOICE,
-        ExerciseType.SPEAK_TERM,
-        ExerciseType.TERM_MCHOICE,
-        ExerciseType.TERM_IMAGE_MCHOICE,
-        ExerciseType.TERM_IMAGE_MCHOICE_TEXT,
-        ExerciseType.TERM_CONNECTION,
-    ]:
-        return
-
-    term = instance.term
-    if instance.additional_content and 'sub_type' in instance.additional_content:
-        sub_type = instance.additional_content['sub_type']
-        if sub_type == ExerciseSubType.TERM_LEXICAL_VALUE:
-            term = instance.term_lexical.term
-        elif sub_type == ExerciseSubType.TERM_LEXICAL_TERM_REF:
-            term = instance.term_lexical.term_value_ref
-
-    levels = TermDefinition.objects.filter(term__id=term.id).values_list(
-        'level', flat=True
-    )
-    for level in levels:
-        ExerciseLevel.objects.get_or_create(exercise=instance, level=level)
-
-
-def create_exercise_level_term_definition(sender, instance, **kwargs):
-    if instance.type != ExerciseType.TERM_DEFINITION_MCHOICE:
-        return
-
-    ExerciseLevel.objects.get_or_create(
-        exercise=instance,
-        level=instance.term_definition.level,
-    )
-
-
-post_save.connect(create_exercise_level_term_example, Exercise)
-post_save.connect(create_exercise_level_term, Exercise)
-post_save.connect(create_exercise_level_term_definition, Exercise)

@@ -8,7 +8,7 @@ from django.db.models import OuterRef, Subquery
 from django.db.models.functions import Random
 from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext as _
-from ninja import File, Router, Schema, UploadedFile
+from ninja import Field, File, Router, Schema, UploadedFile
 from pydantic import create_model
 
 from exako.apps.core.schema import NotAuthenticated, NotFound
@@ -38,6 +38,10 @@ def _shuffle_dict(dict_):
 def _camel_to_snake(name):
     pattern = re.compile(r'(?<!^)(?<![A-Z])(?=[A-Z])')
     return pattern.sub('_', name).lower()
+
+
+def _normalize_text(text):
+    return text.lower().translate(str.maketrans('', '', string.punctuation)).strip()
 
 
 class Exercise(ABC):
@@ -168,6 +172,7 @@ class Exercise(ABC):
 
         CheckSchema = create_model(
             f'CheckSchema{cls.__name__}',
+            time_to_answer=(int, Field(gt=0)),
             **{
                 name: (field.annotation, field)
                 for name, field in ExerciseSchema.model_fields.items()
@@ -228,7 +233,9 @@ class OrderSentenceExercise(Exercise):
         return self.exercise.term_example.example
 
     def assert_answer(self, answer: dict) -> bool:
-        return answer['sentence'].lower().strip() == self.correct_answer.lower()
+        sentence = _normalize_text(answer['sentence'])
+        correct_answer = _normalize_text(self.correct_answer)
+        return sentence == correct_answer
 
     def get_incorrect_feedback(self):
         return constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
@@ -272,7 +279,9 @@ class ListenTermExercise(Exercise):
         return text
 
     def assert_answer(self, answer: dict) -> bool:
-        return answer['expression'].lower() == self.correct_answer.lower()
+        sentence = _normalize_text(answer['expression'])
+        correct_answer = _normalize_text(self.correct_answer)
+        return sentence == correct_answer
 
     def get_incorrect_feedback(self):
         return constants.INCORRECT_FEEDBACK_CORRECT_ANSWER.format(
@@ -317,7 +326,7 @@ class ListenTermMChoiceExercise(Exercise):
             .order_by('random_order')[:3]
             .values_list(
                 'term_value_ref_id',
-                'term_value_ref__expression',
+                'audio_file',
             )
         )
         choices.update({term_id: audio_file for term_id, audio_file in choices_rhymes})
@@ -369,12 +378,8 @@ class ListenSentenceExercise(Exercise):
         return self.exercise.term_example.example
 
     def assert_answer(self, answer: dict) -> bool:
-        sentence = answer['sentence'].lower()
-        sentence = sentence.translate(str.maketrans('', '', string.punctuation))
-        correct_answer = self.correct_answer.lower()
-        correct_answer = correct_answer.translate(
-            str.maketrans('', '', string.punctuation)
-        )
+        sentence = _normalize_text(answer['sentence'])
+        correct_answer = _normalize_text(self.correct_answer)
         return sentence == correct_answer
 
     def get_incorrect_feedback(self):

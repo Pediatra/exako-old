@@ -60,7 +60,7 @@ def term_view(request, language):
     term_definition_examples = TermExampleLink.objects.select_related(
         'term_example'
     ).filter(term_definition_id__in=term_definitions.values('id'))
-    term_pronunciation = TermPronunciation.objects.get(term=term)
+    term_pronunciation = TermPronunciation.objects.filter(term=term).first()
     return render(
         request,
         'term/term_view.html',
@@ -140,7 +140,7 @@ def search_reverse_partial(request):
         'translation_language'
     )
     if not all([expression, language, translation_language]):
-        return HttpResponse(status=204)
+        return HttpResponse(status=400)
     query = (
         Term.objects.search_reverse(
             expression=expression,
@@ -173,7 +173,7 @@ def index_term_partial(request):
     char = request.POST.get('char') or request.GET.get('char')
     language = request.POST.get('language') or request.GET.get('language')
     if not all([char, language]) and not re.match(char, r'^[a-zA-Z]$'):
-        return HttpResponse(status=204)
+        return HttpResponse(status=400)
     query = Term.objects.filter(
         language=language,
         expression__startswith=char.lower(),
@@ -207,7 +207,7 @@ def term_examples_partial(request, language):
         obj = get_object_or_404(Model, id=value)
         identifier = key
     if obj is None:
-        return HttpResponse(status=204)
+        return HttpResponse(status=400)
     query = (
         TermExampleLink.objects.select_related('term_example')
         .filter(**{identifier: obj})

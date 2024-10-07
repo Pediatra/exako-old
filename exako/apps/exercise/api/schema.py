@@ -244,6 +244,13 @@ class TermConnectionSchema(ExerciseSchemaBase):
             )
         if not isinstance(additional_content['connections']['term'], list):
             raise ValueError('invalid connections format, it should be a id list.')
+
+        connections = set(additional_content['connections']['term'])
+        distractors = set(additional_content['distractors']['term'])
+
+        if len(connections.intersection(distractors)) > 0:
+            raise ValueError('intersection between connection and distractors list.')
+            
         return additional_content
 
 
